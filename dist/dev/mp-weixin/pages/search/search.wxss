@@ -1,0 +1,108 @@
+
+.container.data-v-cdfa925e {
+  padding: 20px;
+  padding-top: 20%;
+  background: linear-gradient(to bottom, #f8f9fa, #e2e6ea);
+  /* 背景渐变 */
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+.search-bar.data-v-cdfa925e {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  background: #fff;
+  padding: 10px;
+  border-radius: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.search-input.data-v-cdfa925e {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 30px;
+  font-size: 16px;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+.search-input.data-v-cdfa925e:focus {
+  outline: none;
+  background: #fff;
+}
+.search-icon.data-v-cdfa925e {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+.items-list.data-v-cdfa925e {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.item.data-v-cdfa925e {
+  width: 48%;
+  position: relative;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.item.data-v-cdfa925e:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+.item-image-container.data-v-cdfa925e {
+  width: 100%;
+  padding-top: 133%;
+  position: relative;
+}
+.item-image.data-v-cdfa925e {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.item-info.data-v-cdfa925e {
+  padding: 15px;
+}
+.item-title.data-v-cdfa925e {
+  font-weight: bold;
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 8px;
+}
+.item-desc.data-v-cdfa925e {
+  color: #777;
+  font-size: 14px;
+  margin-top: 5px;
+}
+.item-price-sales.data-v-cdfa925e {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+.item-price.data-v-cdfa925e {
+  color: #fc4353;
+  font-size: 16px;
+  font-weight: bold;
+}
+.item-sales.data-v-cdfa925e {
+  color: #888;
+  font-size: 14px;
+}
+.no-results.data-v-cdfa925e {
+  margin-top: 20px;
+  color: #999;
+  text-align: center;
+  font-size: 16px;
+}
