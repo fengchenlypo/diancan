@@ -23,6 +23,7 @@
             <picker mode="selector" :range="array" @change="bindChange">
               <view class="picker">就餐方式：{{ array[index] }}</view>
             </picker>
+            
           </view>
         </view>
 
