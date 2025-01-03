@@ -87,8 +87,8 @@
   align-items: center;
 }
 .order-icon.data-v-83a5a03c {
-  width: 20px;
-  height: 20px;
+  width: 40px;
+  height: 40px;
   margin-right: 8px;
 }
 .my-order-text.data-v-83a5a03c {
@@ -102,9 +102,13 @@
   flex: 1;
 }
 .cate-left.data-v-83a5a03c {
-  width: 30%;
+  width: 25%;
   border-right: 1px solid #ddd;
   padding: 10px;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 2;
 }
 .cate-item.data-v-83a5a03c {
   cursor: pointer;
@@ -116,20 +120,26 @@
   color: white;
 }
 .cate-right.data-v-83a5a03c {
-  flex: 1;
+  width: 75%;
   padding: 10px;
   overflow-y: auto;
 }
+
+/* 商品内容部分 */
 .cate-content.data-v-83a5a03c {
   display: flex;
-  margin-bottom: 15px;
+  padding: 10px;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
 }
 .item-image.data-v-83a5a03c {
-  width: 100px;
-  height: 100px;
-  margin-right: 10px;
+  width: 80px;
+  height: 80px;
+  -o-object-fit: cover;
+     object-fit: cover;
 }
 .item-info.data-v-83a5a03c {
+  margin-left: 10px;
   flex: 1;
 }
 .item-title.data-v-83a5a03c {
@@ -137,16 +147,102 @@
   font-weight: bold;
 }
 .item-desc.data-v-83a5a03c {
-  color: #666;
-  display: flex;
-  flex-direction: column;
-}
-.item-sales.data-v-83a5a03c {
-  color: #999;
+  font-size: 14px;
+  color: #888;
 }
 .item-price.data-v-83a5a03c {
-  font-size: 18px;
-  color: #fc4353;
+  font-size: 16px;
   font-weight: bold;
-  margin-top: 10px;
+  color: #fc4353;
+}
+
+/* 数量选择器 */
+.quantity-selector.data-v-83a5a03c {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 添加按钮和输入框的间距 */
+}
+.quantity-selector button.data-v-83a5a03c {
+  width: 40px;
+  height: 40px;
+  background-color: #fc4353;
+  color: white;
+  border: none;
+  font-size: 18px;
+  border-radius: 5px;
+  /* 添加圆角 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.quantity-selector input.data-v-83a5a03c {
+  width: 50px;
+  text-align: center;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  padding: 5px;
+  border-radius: 5px;
+  /* 圆角 */
+  height: 40px;
+  /* 保持与按钮一致的高度 */
+}
+
+/* 底部订单部分 */
+.bottom-order-container.data-v-83a5a03c {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 15px;
+  background-color: white;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.order-info-bottom.data-v-83a5a03c {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.order-icon-container.data-v-83a5a03c {
+  position: relative;
+}
+.order-icon.data-v-83a5a03c {
+  width: 25px;
+  height: 25px;
+}
+.badge.data-v-83a5a03c {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #fc4353;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.total-price-container.data-v-83a5a03c {
+  flex: 1;
+  text-align: left;
+  margin-left: 5%;
+}
+.total-price.data-v-83a5a03c {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fc4353;
+}
+.confirm-button.data-v-83a5a03c {
+  background-color: #fc4353;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
 }

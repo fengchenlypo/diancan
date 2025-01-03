@@ -95,6 +95,10 @@ const looseToNumber = (val) => {
   const n2 = parseFloat(val);
   return isNaN(n2) ? val : n2;
 };
+let _globalThis;
+const getGlobalThis = () => {
+  return _globalThis || (_globalThis = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
+};
 function normalizeClass(value) {
   let res = "";
   if (isString(value)) {
@@ -175,10 +179,6 @@ const ON_NAVIGATION_BAR_SEARCH_INPUT_CLICKED = "onNavigationBarSearchInputClicke
 const ON_NAVIGATION_BAR_SEARCH_INPUT_CHANGED = "onNavigationBarSearchInputChanged";
 const ON_NAVIGATION_BAR_SEARCH_INPUT_CONFIRMED = "onNavigationBarSearchInputConfirmed";
 const ON_NAVIGATION_BAR_SEARCH_INPUT_FOCUS_CHANGED = "onNavigationBarSearchInputFocusChanged";
-const VIRTUAL_HOST_STYLE = "virtualHostStyle";
-const VIRTUAL_HOST_CLASS = "virtualHostClass";
-const VIRTUAL_HOST_HIDDEN = "virtualHostHidden";
-const VIRTUAL_HOST_ID = "virtualHostId";
 function hasLeadingSlash(str) {
   return str.indexOf("/") === 0;
 }
@@ -330,7 +330,9 @@ function invokeCreateVueAppHook(app) {
   createVueAppHooks.forEach((hook) => hook(app));
 }
 const invokeCreateErrorHandler = once((app, createErrorHandler2) => {
-  return createErrorHandler2(app);
+  if (isFunction(app._component.onError)) {
+    return createErrorHandler2(app);
+  }
 });
 const E = function() {
 };
@@ -419,6 +421,9 @@ function normalizeLocale(locale, messages) {
   if (lang) {
     return lang;
   }
+}
+function getBaseSystemInfo() {
+  return wx.getSystemInfoSync();
 }
 function validateProtocolFail(name, msg) {
   console.warn(`${name}: ${msg}`);
@@ -623,7 +628,7 @@ function wrapperHook(hook, params) {
     return hook(data, params) || data;
   };
 }
-function queue$1(hooks, data, params) {
+function queue$2(hooks, data, params) {
   let promise = false;
   for (let i = 0; i < hooks.length; i++) {
     const hook = hooks[i];
@@ -660,7 +665,7 @@ function wrapperOptions(interceptors2, options = {}) {
     }
     const oldCallback = options[name];
     options[name] = function callbackInterceptor(res) {
-      queue$1(hooks, res, options).then((res2) => {
+      queue$2(hooks, res, options).then((res2) => {
         return isFunction(oldCallback) && oldCallback(res2) || res2;
       });
     };
@@ -702,7 +707,7 @@ function invokeApi(method, api, options, params) {
   const interceptor = getApiInterceptorHooks(method);
   if (interceptor && Object.keys(interceptor).length) {
     if (isArray(interceptor.invoke)) {
-      const res = queue$1(interceptor.invoke, options);
+      const res = queue$2(interceptor.invoke, options);
       return res.then((options2) => {
         return api(wrapperOptions(getApiInterceptorHooks(method), options2), ...params);
       });
@@ -726,8 +731,8 @@ function promisify$1(name, fn) {
     if (hasCallback(args)) {
       return wrapperReturnValue(name, invokeApi(name, fn, args, rest));
     }
-    return wrapperReturnValue(name, handlePromise(new Promise((resolve, reject) => {
-      invokeApi(name, fn, extend(args, { success: resolve, fail: reject }), rest);
+    return wrapperReturnValue(name, handlePromise(new Promise((resolve2, reject) => {
+      invokeApi(name, fn, extend(args, { success: resolve2, fail: reject }), rest);
     })));
   };
 }
@@ -825,9 +830,7 @@ let isIOS = false;
 let deviceWidth = 0;
 let deviceDPR = 0;
 function checkDeviceWidth() {
-  const { windowWidth, pixelRatio, platform } = Object.assign({}, wx.getWindowInfo(), {
-    platform: wx.getDeviceInfo().platform
-  });
+  const { platform, pixelRatio, windowWidth } = getBaseSystemInfo();
   deviceWidth = windowWidth;
   deviceDPR = pixelRatio;
   isIOS = platform === "ios";
@@ -855,12 +858,6 @@ const upx2px = defineSyncApi(API_UPX2PX, (number, newDeviceWidth) => {
   }
   return number < 0 ? -result : result;
 }, Upx2pxProtocol);
-function __f__(type, filename, ...args) {
-  if (filename) {
-    args.push(filename);
-  }
-  console[type].apply(console, args);
-}
 const API_ADD_INTERCEPTOR = "addInterceptor";
 const API_REMOVE_INTERCEPTOR = "removeInterceptor";
 const AddInterceptorProtocol = [
@@ -1040,7 +1037,7 @@ function invokeGetPushCidCallbacks(cid2, errMsg) {
   getPushCidCallbacks.length = 0;
 }
 const API_GET_PUSH_CLIENT_ID = "getPushClientId";
-const getPushClientId = defineAsyncApi(API_GET_PUSH_CLIENT_ID, (_, { resolve, reject }) => {
+const getPushClientId = defineAsyncApi(API_GET_PUSH_CLIENT_ID, (_, { resolve: resolve2, reject }) => {
   Promise.resolve().then(() => {
     if (typeof enabled === "undefined") {
       enabled = false;
@@ -1049,7 +1046,7 @@ const getPushClientId = defineAsyncApi(API_GET_PUSH_CLIENT_ID, (_, { resolve, re
     }
     getPushCidCallbacks.push((cid2, errMsg) => {
       if (cid2) {
-        resolve({ cid: cid2 });
+        resolve2({ cid: cid2 });
       } else {
         reject(errMsg);
       }
@@ -1075,10 +1072,9 @@ const offPushMessage = (fn) => {
     }
   }
 };
-const SYNC_API_RE = /^\$|__f__|getLocale|setLocale|sendNativeEvent|restoreGlobal|requireGlobal|getCurrentSubNVue|getMenuButtonBoundingClientRect|^report|interceptors|Interceptor$|getSubNVueById|requireNativePlugin|upx2px|rpx2px|hideKeyboard|canIUse|^create|Sync$|Manager$|base64ToArrayBuffer|arrayBufferToBase64|getDeviceInfo|getAppBaseInfo|getWindowInfo|getSystemSetting|getAppAuthorizeSetting/;
+const SYNC_API_RE = /^\$|getLocale|setLocale|sendNativeEvent|restoreGlobal|requireGlobal|getCurrentSubNVue|getMenuButtonBoundingClientRect|^report|interceptors|Interceptor$|getSubNVueById|requireNativePlugin|upx2px|hideKeyboard|canIUse|^create|Sync$|Manager$|base64ToArrayBuffer|arrayBufferToBase64|getDeviceInfo|getAppBaseInfo|getWindowInfo|getSystemSetting|getAppAuthorizeSetting/;
 const CONTEXT_API_RE = /^create|Manager$/;
 const CONTEXT_API_RE_EXC = ["createBLEConnection"];
-const TASK_APIS = ["request", "downloadFile", "uploadFile", "connectSocket"];
 const ASYNC_API = ["createBLEConnection"];
 const CALLBACK_API_RE = /^on|^off/;
 function isContextApi(name) {
@@ -1089,9 +1085,6 @@ function isSyncApi(name) {
 }
 function isCallbackApi(name) {
   return CALLBACK_API_RE.test(name) && name !== "onPush";
-}
-function isTaskApi(name) {
-  return TASK_APIS.indexOf(name) !== -1;
 }
 function shouldPromise(name) {
   if (isContextApi(name) || isSyncApi(name) || isCallbackApi(name)) {
@@ -1118,9 +1111,9 @@ function promisify(name, api) {
     if (isFunction(options.success) || isFunction(options.fail) || isFunction(options.complete)) {
       return wrapperReturnValue(name, invokeApi(name, api, options, rest));
     }
-    return wrapperReturnValue(name, handlePromise(new Promise((resolve, reject) => {
+    return wrapperReturnValue(name, handlePromise(new Promise((resolve2, reject) => {
       invokeApi(name, api, extend({}, options, {
-        success: resolve,
+        success: resolve2,
         fail: reject
       }), rest);
     })));
@@ -1165,9 +1158,6 @@ function initWrapper(protocols2) {
       }
       return toArgs;
     } else if (isFunction(fromArgs)) {
-      if (isFunction(argsOption)) {
-        argsOption(fromArgs, {});
-      }
       fromArgs = processCallback(methodName, fromArgs, returnValue);
     }
     return fromArgs;
@@ -1176,31 +1166,20 @@ function initWrapper(protocols2) {
     if (isFunction(protocols2.returnValue)) {
       res = protocols2.returnValue(methodName, res);
     }
-    const realKeepReturnValue = keepReturnValue || false;
-    return processArgs(methodName, res, returnValue, {}, realKeepReturnValue);
+    return processArgs(methodName, res, returnValue, {}, keepReturnValue);
   }
   return function wrapper(methodName, method) {
-    if ((isContextApi(methodName) || isTaskApi(methodName)) && method) {
-      const oldMethod = method;
-      method = function(...args) {
-        const contextOrTask = oldMethod.apply(this, args);
-        if (contextOrTask) {
-          contextOrTask.__v_skip = true;
-        }
-        return contextOrTask;
-      };
-    }
-    if (!hasOwn(protocols2, methodName) && !isFunction(protocols2.returnValue) || !isFunction(method)) {
+    if (!hasOwn(protocols2, methodName)) {
       return method;
     }
     const protocol = protocols2[methodName];
-    if (!protocol && !isFunction(protocols2.returnValue)) {
+    if (!protocol) {
       return function() {
         console.error(`微信小程序 暂不支持${methodName}`);
       };
     }
     return function(arg1, arg2) {
-      let options = protocol || {};
+      let options = protocol;
       if (isFunction(protocol)) {
         options = protocol(arg1);
       }
@@ -1210,11 +1189,6 @@ function initWrapper(protocols2) {
         args.push(arg2);
       }
       const returnValue = wx[options.name || methodName].apply(wx, args);
-      if (isContextApi(methodName) || isTaskApi(methodName)) {
-        if (returnValue && !returnValue.__v_skip) {
-          returnValue.__v_skip = true;
-        }
-      }
       if (isSyncApi(methodName)) {
         return processReturnValue(methodName, returnValue, options.returnValue, isContextApi(methodName));
       }
@@ -1227,7 +1201,7 @@ const getLocale = () => {
   if (app && app.$vm) {
     return app.$vm.$locale;
   }
-  return normalizeLocale(wx.getAppBaseInfo().language) || LOCALE_EN;
+  return normalizeLocale(wx.getSystemInfoSync().language) || LOCALE_EN;
 };
 const setLocale = (locale) => {
   const app = isFunction(getApp) && getApp();
@@ -1302,16 +1276,16 @@ function populateParameters(fromRes, toRes) {
   let _deviceOrientation = deviceOrientation;
   let _devicePixelRatio = pixelRatio;
   let _SDKVersion = SDKVersion;
-  const hostLanguage = (language || "").replace(/_/g, "-");
+  const hostLanguage = language.replace(/_/g, "-");
   const parameters = {
     appId: "",
     appName: "",
     appVersion: "1.0.0",
     appVersionCode: "100",
     appLanguage: getAppLanguage(),
-    uniCompileVersion: "4.44",
-    uniCompilerVersion: "4.44",
-    uniRuntimeVersion: "4.44",
+    uniCompileVersion: "4.36",
+    uniCompilerVersion: "4.36",
+    uniRuntimeVersion: "4.36",
     uniPlatform: "mp-weixin",
     deviceBrand,
     deviceModel: model,
@@ -1446,8 +1420,8 @@ const getAppBaseInfo = {
   returnValue: (fromRes, toRes) => {
     const { version: version2, language, SDKVersion, theme } = fromRes;
     let _hostName = getHostName(fromRes);
-    let hostLanguage = (language || "").replace(/_/g, "-");
-    const parameters = {
+    let hostLanguage = language.replace(/_/g, "-");
+    toRes = sortObject(extend(toRes, {
       hostVersion: version2,
       hostLanguage,
       hostName: _hostName,
@@ -1460,11 +1434,10 @@ const getAppBaseInfo = {
       appLanguage: getAppLanguage(),
       isUniAppX: false,
       uniPlatform: "mp-weixin",
-      uniCompileVersion: "4.44",
-      uniCompilerVersion: "4.44",
-      uniRuntimeVersion: "4.44"
-    };
-    extend(toRes, parameters);
+      uniCompileVersion: "4.36",
+      uniCompilerVersion: "4.36",
+      uniRuntimeVersion: "4.36"
+    }));
   }
 };
 const getWindowInfo = {
@@ -1487,48 +1460,12 @@ const getAppAuthorizeSetting = {
     }
   }
 };
-const onError = {
-  args(fromArgs) {
-    const app = getApp({ allowDefault: true }) || {};
-    if (!app.$vm) {
-      if (!wx.$onErrorHandlers) {
-        wx.$onErrorHandlers = [];
-      }
-      wx.$onErrorHandlers.push(fromArgs);
-    } else {
-      injectHook(ON_ERROR, fromArgs, app.$vm.$);
-    }
-  }
-};
-const offError = {
-  args(fromArgs) {
-    const app = getApp({ allowDefault: true }) || {};
-    if (!app.$vm) {
-      if (!wx.$onErrorHandlers) {
-        return;
-      }
-      const index2 = wx.$onErrorHandlers.findIndex((fn) => fn === fromArgs);
-      if (index2 !== -1) {
-        wx.$onErrorHandlers.splice(index2, 1);
-      }
-    } else if (fromArgs.__weh) {
-      const onErrors = app.$vm.$[ON_ERROR];
-      if (onErrors) {
-        const index2 = onErrors.indexOf(fromArgs.__weh);
-        if (index2 > -1) {
-          onErrors.splice(index2, 1);
-        }
-      }
-    }
-  }
-};
 const baseApis = {
   $on,
   $off,
   $once,
   $emit,
   upx2px,
-  rpx2px: upx2px,
   interceptors,
   addInterceptor,
   removeInterceptor,
@@ -1540,8 +1477,7 @@ const baseApis = {
   getPushClientId,
   onPushMessage,
   offPushMessage,
-  invokePushCallback,
-  __f__
+  invokePushCallback
 };
 function initUni(api, protocols2, platform = wx) {
   const wrapper = initWrapper(protocols2);
@@ -1666,14 +1602,509 @@ var protocols = /* @__PURE__ */ Object.freeze({
   getSystemInfo,
   getSystemInfoSync,
   getWindowInfo,
-  offError,
-  onError,
   previewImage,
   redirectTo,
   showActionSheet
 });
 const wx$1 = initWx();
 var index = initUni(shims, protocols, wx$1);
+new Set(
+  /* @__PURE__ */ Object.getOwnPropertyNames(Symbol).filter((key) => key !== "arguments" && key !== "caller").map((key) => Symbol[key]).filter(isSymbol)
+);
+function toRaw$1(observed) {
+  const raw = observed && observed["__v_raw"];
+  return raw ? toRaw$1(raw) : observed;
+}
+function isRef$1(r2) {
+  return !!(r2 && r2.__v_isRef === true);
+}
+/**
+* @vue/runtime-core v3.4.21
+* (c) 2018-present Yuxi (Evan) You and Vue contributors
+* @license MIT
+**/
+const stack$1 = [];
+function pushWarningContext$1(vnode) {
+  stack$1.push(vnode);
+}
+function popWarningContext$1() {
+  stack$1.pop();
+}
+function warn$1$1(msg, ...args) {
+  const instance = stack$1.length ? stack$1[stack$1.length - 1].component : null;
+  const appWarnHandler = instance && instance.appContext.config.warnHandler;
+  const trace = getComponentTrace$1();
+  if (appWarnHandler) {
+    callWithErrorHandling$1(
+      appWarnHandler,
+      instance,
+      11,
+      [
+        msg + args.map((a) => {
+          var _a, _b;
+          return (_b = (_a = a.toString) == null ? void 0 : _a.call(a)) != null ? _b : JSON.stringify(a);
+        }).join(""),
+        instance && instance.proxy,
+        trace.map(
+          ({ vnode }) => `at <${formatComponentName$1(instance, vnode.type)}>`
+        ).join("\n"),
+        trace
+      ]
+    );
+  } else {
+    const warnArgs = [`[Vue warn]: ${msg}`, ...args];
+    if (trace.length && // avoid spamming console during tests
+    true) {
+      warnArgs.push(`
+`, ...formatTrace$1(trace));
+    }
+    console.warn(...warnArgs);
+  }
+}
+function getComponentTrace$1() {
+  let currentVNode = stack$1[stack$1.length - 1];
+  if (!currentVNode) {
+    return [];
+  }
+  const normalizedStack = [];
+  while (currentVNode) {
+    const last = normalizedStack[0];
+    if (last && last.vnode === currentVNode) {
+      last.recurseCount++;
+    } else {
+      normalizedStack.push({
+        vnode: currentVNode,
+        recurseCount: 0
+      });
+    }
+    const parentInstance = currentVNode.component && currentVNode.component.parent;
+    currentVNode = parentInstance && parentInstance.vnode;
+  }
+  return normalizedStack;
+}
+function formatTrace$1(trace) {
+  const logs = [];
+  trace.forEach((entry, i) => {
+    logs.push(...i === 0 ? [] : [`
+`], ...formatTraceEntry$1(entry));
+  });
+  return logs;
+}
+function formatTraceEntry$1({ vnode, recurseCount }) {
+  const postfix = recurseCount > 0 ? `... (${recurseCount} recursive calls)` : ``;
+  const isRoot = vnode.component ? vnode.component.parent == null : false;
+  const open = ` at <${formatComponentName$1(
+    vnode.component,
+    vnode.type,
+    isRoot
+  )}`;
+  const close = `>` + postfix;
+  return vnode.props ? [open, ...formatProps$1(vnode.props), close] : [open + close];
+}
+function formatProps$1(props) {
+  const res = [];
+  const keys = Object.keys(props);
+  keys.slice(0, 3).forEach((key) => {
+    res.push(...formatProp$1(key, props[key]));
+  });
+  if (keys.length > 3) {
+    res.push(` ...`);
+  }
+  return res;
+}
+function formatProp$1(key, value, raw) {
+  if (isString(value)) {
+    value = JSON.stringify(value);
+    return raw ? value : [`${key}=${value}`];
+  } else if (typeof value === "number" || typeof value === "boolean" || value == null) {
+    return raw ? value : [`${key}=${value}`];
+  } else if (isRef$1(value)) {
+    value = formatProp$1(key, toRaw$1(value.value), true);
+    return raw ? value : [`${key}=Ref<`, value, `>`];
+  } else if (isFunction(value)) {
+    return [`${key}=fn${value.name ? `<${value.name}>` : ``}`];
+  } else {
+    value = toRaw$1(value);
+    return raw ? value : [`${key}=`, value];
+  }
+}
+const ErrorTypeStrings$1 = {
+  ["sp"]: "serverPrefetch hook",
+  ["bc"]: "beforeCreate hook",
+  ["c"]: "created hook",
+  ["bm"]: "beforeMount hook",
+  ["m"]: "mounted hook",
+  ["bu"]: "beforeUpdate hook",
+  ["u"]: "updated",
+  ["bum"]: "beforeUnmount hook",
+  ["um"]: "unmounted hook",
+  ["a"]: "activated hook",
+  ["da"]: "deactivated hook",
+  ["ec"]: "errorCaptured hook",
+  ["rtc"]: "renderTracked hook",
+  ["rtg"]: "renderTriggered hook",
+  [0]: "setup function",
+  [1]: "render function",
+  [2]: "watcher getter",
+  [3]: "watcher callback",
+  [4]: "watcher cleanup function",
+  [5]: "native event handler",
+  [6]: "component event handler",
+  [7]: "vnode hook",
+  [8]: "directive hook",
+  [9]: "transition hook",
+  [10]: "app errorHandler",
+  [11]: "app warnHandler",
+  [12]: "ref function",
+  [13]: "async component loader",
+  [14]: "scheduler flush. This is likely a Vue internals bug. Please open an issue at https://github.com/vuejs/core ."
+};
+function callWithErrorHandling$1(fn, instance, type, args) {
+  try {
+    return args ? fn(...args) : fn();
+  } catch (err) {
+    handleError$1(err, instance, type);
+  }
+}
+function handleError$1(err, instance, type, throwInDev = true) {
+  const contextVNode = instance ? instance.vnode : null;
+  if (instance) {
+    let cur = instance.parent;
+    const exposedInstance = instance.proxy;
+    const errorInfo = ErrorTypeStrings$1[type];
+    while (cur) {
+      const errorCapturedHooks = cur.ec;
+      if (errorCapturedHooks) {
+        for (let i = 0; i < errorCapturedHooks.length; i++) {
+          if (errorCapturedHooks[i](err, exposedInstance, errorInfo) === false) {
+            return;
+          }
+        }
+      }
+      cur = cur.parent;
+    }
+    const appErrorHandler = instance.appContext.config.errorHandler;
+    if (appErrorHandler) {
+      callWithErrorHandling$1(
+        appErrorHandler,
+        null,
+        10,
+        [err, exposedInstance, errorInfo]
+      );
+      return;
+    }
+  }
+  logError$1(err, type, contextVNode, throwInDev);
+}
+function logError$1(err, type, contextVNode, throwInDev = true) {
+  {
+    const info = ErrorTypeStrings$1[type];
+    if (contextVNode) {
+      pushWarningContext$1(contextVNode);
+    }
+    warn$1$1(`Unhandled error${info ? ` during execution of ${info}` : ``}`);
+    if (contextVNode) {
+      popWarningContext$1();
+    }
+    if (throwInDev) {
+      throw err;
+    } else {
+      console.error(err);
+    }
+  }
+}
+let isFlushing$1 = false;
+let isFlushPending$1 = false;
+const queue$1 = [];
+let flushIndex$1 = 0;
+const pendingPostFlushCbs$1 = [];
+let activePostFlushCbs$1 = null;
+let postFlushIndex$1 = 0;
+const resolvedPromise$1 = /* @__PURE__ */ Promise.resolve();
+const RECURSION_LIMIT$1 = 100;
+function findInsertionIndex$1(id) {
+  let start = flushIndex$1 + 1;
+  let end = queue$1.length;
+  while (start < end) {
+    const middle = start + end >>> 1;
+    const middleJob = queue$1[middle];
+    const middleJobId = getId$1(middleJob);
+    if (middleJobId < id || middleJobId === id && middleJob.pre) {
+      start = middle + 1;
+    } else {
+      end = middle;
+    }
+  }
+  return start;
+}
+function queueJob$1(job) {
+  if (!queue$1.length || !queue$1.includes(
+    job,
+    isFlushing$1 && job.allowRecurse ? flushIndex$1 + 1 : flushIndex$1
+  )) {
+    if (job.id == null) {
+      queue$1.push(job);
+    } else {
+      queue$1.splice(findInsertionIndex$1(job.id), 0, job);
+    }
+    queueFlush$1();
+  }
+}
+function queueFlush$1() {
+  if (!isFlushing$1 && !isFlushPending$1) {
+    isFlushPending$1 = true;
+    resolvedPromise$1.then(flushJobs$1);
+  }
+}
+function queuePostFlushCb$1(cb) {
+  if (!isArray(cb)) {
+    if (!activePostFlushCbs$1 || !activePostFlushCbs$1.includes(
+      cb,
+      cb.allowRecurse ? postFlushIndex$1 + 1 : postFlushIndex$1
+    )) {
+      pendingPostFlushCbs$1.push(cb);
+    }
+  } else {
+    pendingPostFlushCbs$1.push(...cb);
+  }
+  queueFlush$1();
+}
+function flushPostFlushCbs$1(seen) {
+  if (pendingPostFlushCbs$1.length) {
+    const deduped = [...new Set(pendingPostFlushCbs$1)].sort(
+      (a, b) => getId$1(a) - getId$1(b)
+    );
+    pendingPostFlushCbs$1.length = 0;
+    if (activePostFlushCbs$1) {
+      activePostFlushCbs$1.push(...deduped);
+      return;
+    }
+    activePostFlushCbs$1 = deduped;
+    {
+      seen = seen || /* @__PURE__ */ new Map();
+    }
+    for (postFlushIndex$1 = 0; postFlushIndex$1 < activePostFlushCbs$1.length; postFlushIndex$1++) {
+      if (checkRecursiveUpdates$1(seen, activePostFlushCbs$1[postFlushIndex$1])) {
+        continue;
+      }
+      activePostFlushCbs$1[postFlushIndex$1]();
+    }
+    activePostFlushCbs$1 = null;
+    postFlushIndex$1 = 0;
+  }
+}
+const getId$1 = (job) => job.id == null ? Infinity : job.id;
+const comparator$1 = (a, b) => {
+  const diff2 = getId$1(a) - getId$1(b);
+  if (diff2 === 0) {
+    if (a.pre && !b.pre)
+      return -1;
+    if (b.pre && !a.pre)
+      return 1;
+  }
+  return diff2;
+};
+function flushJobs$1(seen) {
+  isFlushPending$1 = false;
+  isFlushing$1 = true;
+  {
+    seen = seen || /* @__PURE__ */ new Map();
+  }
+  queue$1.sort(comparator$1);
+  const check = (job) => checkRecursiveUpdates$1(seen, job);
+  try {
+    for (flushIndex$1 = 0; flushIndex$1 < queue$1.length; flushIndex$1++) {
+      const job = queue$1[flushIndex$1];
+      if (job && job.active !== false) {
+        if (check(job)) {
+          continue;
+        }
+        callWithErrorHandling$1(job, null, 14);
+      }
+    }
+  } finally {
+    flushIndex$1 = 0;
+    queue$1.length = 0;
+    flushPostFlushCbs$1(seen);
+    isFlushing$1 = false;
+    if (queue$1.length || pendingPostFlushCbs$1.length) {
+      flushJobs$1(seen);
+    }
+  }
+}
+function checkRecursiveUpdates$1(seen, fn) {
+  if (!seen.has(fn)) {
+    seen.set(fn, 1);
+  } else {
+    const count = seen.get(fn);
+    if (count > RECURSION_LIMIT$1) {
+      const instance = fn.ownerInstance;
+      const componentName = instance && getComponentName$1(instance.type);
+      handleError$1(
+        `Maximum recursive updates exceeded${componentName ? ` in component <${componentName}>` : ``}. This means you have a reactive effect that is mutating its own dependencies and thus recursively triggering itself. Possible sources include component template, render function, updated hook or watcher source function.`,
+        null,
+        10
+      );
+      return true;
+    } else {
+      seen.set(fn, count + 1);
+    }
+  }
+}
+const hmrDirtyComponents = /* @__PURE__ */ new Set();
+{
+  getGlobalThis().__VUE_HMR_RUNTIME__ = {
+    createRecord: tryWrap(createRecord),
+    rerender: tryWrap(rerender),
+    reload: tryWrap(reload)
+  };
+}
+const map = /* @__PURE__ */ new Map();
+function createRecord(id, initialDef) {
+  if (map.has(id)) {
+    return false;
+  }
+  map.set(id, {
+    initialDef: normalizeClassComponent(initialDef),
+    instances: /* @__PURE__ */ new Set()
+  });
+  return true;
+}
+function normalizeClassComponent(component) {
+  return isClassComponent$1(component) ? component.__vccOpts : component;
+}
+function rerender(id, newRender) {
+  const record = map.get(id);
+  if (!record) {
+    return;
+  }
+  record.initialDef.render = newRender;
+  [...record.instances].forEach((instance) => {
+    if (newRender) {
+      instance.render = newRender;
+      normalizeClassComponent(instance.type).render = newRender;
+    }
+    instance.renderCache = [];
+    instance.effect.dirty = true;
+    instance.update();
+  });
+}
+function reload(id, newComp) {
+  const record = map.get(id);
+  if (!record)
+    return;
+  newComp = normalizeClassComponent(newComp);
+  updateComponentDef(record.initialDef, newComp);
+  const instances = [...record.instances];
+  for (const instance of instances) {
+    const oldComp = normalizeClassComponent(instance.type);
+    if (!hmrDirtyComponents.has(oldComp)) {
+      if (oldComp !== record.initialDef) {
+        updateComponentDef(oldComp, newComp);
+      }
+      hmrDirtyComponents.add(oldComp);
+    }
+    instance.appContext.propsCache.delete(instance.type);
+    instance.appContext.emitsCache.delete(instance.type);
+    instance.appContext.optionsCache.delete(instance.type);
+    if (instance.ceReload) {
+      hmrDirtyComponents.add(oldComp);
+      instance.ceReload(newComp.styles);
+      hmrDirtyComponents.delete(oldComp);
+    } else if (instance.parent) {
+      instance.parent.effect.dirty = true;
+      queueJob$1(instance.parent.update);
+    } else if (instance.appContext.reload) {
+      instance.appContext.reload();
+    } else if (typeof window !== "undefined") {
+      window.location.reload();
+    } else {
+      console.warn(
+        "[HMR] Root or manually mounted instance modified. Full reload required."
+      );
+    }
+  }
+  queuePostFlushCb$1(() => {
+    for (const instance of instances) {
+      hmrDirtyComponents.delete(
+        normalizeClassComponent(instance.type)
+      );
+    }
+  });
+}
+function updateComponentDef(oldComp, newComp) {
+  extend(oldComp, newComp);
+  for (const key in oldComp) {
+    if (key !== "__file" && !(key in newComp)) {
+      delete oldComp[key];
+    }
+  }
+}
+function tryWrap(fn) {
+  return (id, arg) => {
+    try {
+      return fn(id, arg);
+    } catch (e2) {
+      console.error(e2);
+      console.warn(
+        `[HMR] Something went wrong during Vue component hot-reload. Full reload required.`
+      );
+    }
+  };
+}
+{
+  const g = getGlobalThis();
+  const registerGlobalSetter = (key, setter) => {
+    let setters;
+    if (!(setters = g[key]))
+      setters = g[key] = [];
+    setters.push(setter);
+    return (v) => {
+      if (setters.length > 1)
+        setters.forEach((set2) => set2(v));
+      else
+        setters[0](v);
+    };
+  };
+  registerGlobalSetter(
+    `__VUE_INSTANCE_SETTERS__`,
+    (v) => v
+  );
+  registerGlobalSetter(
+    `__VUE_SSR_SETTERS__`,
+    (v) => v
+  );
+}
+const classifyRE$1 = /(?:^|[-_])(\w)/g;
+const classify$1 = (str) => str.replace(classifyRE$1, (c2) => c2.toUpperCase()).replace(/[-_]/g, "");
+function getComponentName$1(Component2, includeInferred = true) {
+  return isFunction(Component2) ? Component2.displayName || Component2.name : Component2.name || includeInferred && Component2.__name;
+}
+function formatComponentName$1(instance, Component2, isRoot = false) {
+  let name = getComponentName$1(Component2);
+  if (!name && Component2.__file) {
+    const match = Component2.__file.match(/([^/\\]+)\.\w+$/);
+    if (match) {
+      name = match[1];
+    }
+  }
+  if (!name && instance && instance.parent) {
+    const inferFromRegistry = (registry) => {
+      for (const key in registry) {
+        if (registry[key] === Component2) {
+          return key;
+        }
+      }
+    };
+    name = inferFromRegistry(
+      instance.components || instance.parent.type.components
+    ) || inferFromRegistry(instance.appContext.components);
+  }
+  return name ? classify$1(name) : isRoot ? `App` : `Anonymous`;
+}
+function isClassComponent$1(value) {
+  return isFunction(value) && "__vccOpts" in value;
+}
 /**
 * @dcloudio/uni-mp-vue v3.4.21
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -1761,7 +2192,7 @@ function getCurrentScope() {
   return activeEffectScope;
 }
 let activeEffect;
-class ReactiveEffect {
+class ReactiveEffect2 {
   constructor(fn, trigger2, scheduler, scope) {
     this.fn = fn;
     this.trigger = trigger2;
@@ -2047,7 +2478,7 @@ function hasOwnProperty(key) {
   track(obj, "has", key);
   return obj.hasOwnProperty(key);
 }
-class BaseReactiveHandler {
+class BaseReactiveHandler2 {
   constructor(_isReadonly = false, _isShallow = false) {
     this._isReadonly = _isReadonly;
     this._isShallow = _isShallow;
@@ -2096,7 +2527,7 @@ class BaseReactiveHandler {
     return res;
   }
 }
-class MutableReactiveHandler extends BaseReactiveHandler {
+class MutableReactiveHandler2 extends BaseReactiveHandler2 {
   constructor(isShallow2 = false) {
     super(false, isShallow2);
   }
@@ -2153,7 +2584,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     return Reflect.ownKeys(target);
   }
 }
-class ReadonlyReactiveHandler extends BaseReactiveHandler {
+class ReadonlyReactiveHandler2 extends BaseReactiveHandler2 {
   constructor(isShallow2 = false) {
     super(true, isShallow2);
   }
@@ -2176,12 +2607,12 @@ class ReadonlyReactiveHandler extends BaseReactiveHandler {
     return true;
   }
 }
-const mutableHandlers = /* @__PURE__ */ new MutableReactiveHandler();
-const readonlyHandlers = /* @__PURE__ */ new ReadonlyReactiveHandler();
-const shallowReactiveHandlers = /* @__PURE__ */ new MutableReactiveHandler(
+const mutableHandlers = /* @__PURE__ */ new MutableReactiveHandler2();
+const readonlyHandlers = /* @__PURE__ */ new ReadonlyReactiveHandler2();
+const shallowReactiveHandlers = /* @__PURE__ */ new MutableReactiveHandler2(
   true
 );
-const shallowReadonlyHandlers = /* @__PURE__ */ new ReadonlyReactiveHandler(true);
+const shallowReadonlyHandlers = /* @__PURE__ */ new ReadonlyReactiveHandler2(true);
 const toShallow = (value) => value;
 const getProto = (v) => Reflect.getPrototypeOf(v);
 function get(target, key, isReadonly2 = false, isShallow2 = false) {
@@ -2558,6 +2989,9 @@ function isReadonly(value) {
 function isShallow(value) {
   return !!(value && value["__v_isShallow"]);
 }
+function isProxy(value) {
+  return isReactive(value) || isReadonly(value);
+}
 function toRaw(observed) {
   const raw = observed && observed["__v_raw"];
   return raw ? toRaw(raw) : observed;
@@ -2578,7 +3012,7 @@ class ComputedRefImpl {
     this.dep = void 0;
     this.__v_isRef = true;
     this["__v_isReadonly"] = false;
-    this.effect = new ReactiveEffect(
+    this.effect = new ReactiveEffect2(
       () => getter(this._value),
       () => triggerRefValue(
         this,
@@ -2590,20 +3024,20 @@ class ComputedRefImpl {
     this["__v_isReadonly"] = isReadonly2;
   }
   get value() {
-    const self = toRaw(this);
-    if ((!self._cacheable || self.effect.dirty) && hasChanged(self._value, self._value = self.effect.run())) {
-      triggerRefValue(self, 4);
+    const self2 = toRaw(this);
+    if ((!self2._cacheable || self2.effect.dirty) && hasChanged(self2._value, self2._value = self2.effect.run())) {
+      triggerRefValue(self2, 4);
     }
-    trackRefValue(self);
-    if (self.effect._dirtyLevel >= 2) {
+    trackRefValue(self2);
+    if (self2.effect._dirtyLevel >= 2) {
       if (this._warnRecursive) {
         warn$2(COMPUTED_SIDE_EFFECT_WARN, `
 
 getter: `, this.getter);
       }
-      triggerRefValue(self, 2);
+      triggerRefValue(self2, 2);
     }
-    return self._value;
+    return self2._value;
   }
   set value(newValue) {
     this._setter(newValue);
@@ -3345,6 +3779,47 @@ function setCurrentRenderingInstance(instance) {
   instance && instance.type.__scopeId || null;
   return prev;
 }
+const COMPONENTS = "components";
+function resolveComponent(name, maybeSelfReference) {
+  return resolveAsset(COMPONENTS, name, true, maybeSelfReference) || name;
+}
+function resolveAsset(type, name, warnMissing = true, maybeSelfReference = false) {
+  const instance = currentRenderingInstance || currentInstance;
+  if (instance) {
+    const Component2 = instance.type;
+    {
+      const selfName = getComponentName(
+        Component2,
+        false
+      );
+      if (selfName && (selfName === name || selfName === camelize(name) || selfName === capitalize(camelize(name)))) {
+        return Component2;
+      }
+    }
+    const res = (
+      // local registration
+      // check instance[type] first which is resolved for options API
+      resolve(instance[type] || Component2[type], name) || // global registration
+      resolve(instance.appContext[type], name)
+    );
+    if (!res && maybeSelfReference) {
+      return Component2;
+    }
+    if (warnMissing && !res) {
+      const extra = `
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement.`;
+      warn$1(`Failed to resolve ${type.slice(0, -1)}: ${name}${extra}`);
+    }
+    return res;
+  } else {
+    warn$1(
+      `resolve${capitalize(type.slice(0, -1))} can only be used in render() or setup().`
+    );
+  }
+}
+function resolve(registry, name) {
+  return registry && (registry[name] || registry[camelize(name)] || registry[capitalize(camelize(name))]);
+}
 const INITIAL_WATCHER_VALUE = {};
 function watch(source, cb, options) {
   if (!isFunction(cb)) {
@@ -3492,7 +3967,7 @@ function doWatch(source, cb, {
       job.id = instance.uid;
     scheduler = () => queueJob(job);
   }
-  const effect2 = new ReactiveEffect(getter, NOOP, scheduler);
+  const effect2 = new ReactiveEffect2(getter, NOOP, scheduler);
   const scope = getCurrentScope();
   const unwatch = () => {
     effect2.stop();
@@ -4964,6 +5439,12 @@ const Static = Symbol.for("v-stc");
 function isVNode(value) {
   return value ? value.__v_isVNode === true : false;
 }
+const InternalObjectKey = `__vInternal`;
+function guardReactiveProps(props) {
+  if (!props)
+    return null;
+  return isProxy(props) || InternalObjectKey in props ? extend({}, props) : props;
+}
 const emptyAppContext = createAppContext();
 let uid = 0;
 function createComponentInstance(vnode, parent, suspense) {
@@ -5940,7 +6421,7 @@ function setupRenderEffect(instance) {
       }
     }
   };
-  const effect2 = instance.effect = new ReactiveEffect(
+  const effect2 = instance.effect = new ReactiveEffect2(
     componentUpdateFn,
     NOOP,
     () => queueJob(update),
@@ -6091,21 +6572,16 @@ function $callMethod(method, ...args) {
   return null;
 }
 function createErrorHandler(app) {
-  const userErrorHandler = app.config.errorHandler;
-  return function errorHandler(err, instance, info) {
-    if (userErrorHandler) {
-      userErrorHandler(err, instance, info);
+  return function errorHandler(err, instance, _info) {
+    if (!instance) {
+      throw err;
     }
     const appInstance = app._instance;
     if (!appInstance || !appInstance.proxy) {
       throw err;
     }
-    if (appInstance[ON_ERROR]) {
-      {
-        appInstance.proxy.$callHook(ON_ERROR, err);
-      }
-    } else {
-      logError(err, info, instance ? instance.$.vnode : null, false);
+    {
+      appInstance.proxy.$callHook(ON_ERROR, err);
     }
   };
 }
@@ -6183,7 +6659,7 @@ function uniIdMixin(globalProperties) {
   };
 }
 function initApp(app) {
-  const appConfig = app.config;
+  const appConfig = app._context.config;
   appConfig.errorHandler = invokeCreateErrorHandler(app, createErrorHandler);
   initOptionMergeStrategies(appConfig.optionMergeStrategies);
   const globalProperties = appConfig.globalProperties;
@@ -6200,6 +6676,11 @@ function initApp(app) {
   }
 }
 const propsCaches = /* @__PURE__ */ Object.create(null);
+function renderProps(props) {
+  const { uid: uid2, __counter } = getCurrentInstance();
+  const propsId = (propsCaches[uid2] || (propsCaches[uid2] = [])).push(guardReactiveProps(props)) - 1;
+  return uid2 + "," + propsId + "," + __counter;
+}
 function pruneComponentPropsCache(uid2) {
   delete propsCaches[uid2];
 }
@@ -6302,7 +6783,7 @@ const bubbles = [
   "animationend",
   "touchforcechange"
 ];
-function patchMPEvent(event, instance) {
+function patchMPEvent(event) {
   if (event.type && event.target) {
     event.preventDefault = NOOP;
     event.stopPropagation = NOOP;
@@ -6371,6 +6852,7 @@ const f = (source, renderItem) => vFor(source, renderItem);
 const e = (target, ...sources) => extend(target, ...sources);
 const n = (value) => normalizeClass(value);
 const t = (val) => toDisplayString(val);
+const p = (props) => renderProps(props);
 function createApp$1(rootComponent, rootProps = null) {
   rootComponent && (rootComponent.mpType = "app");
   return createVueApp(rootComponent, rootProps).use(plugin);
@@ -6487,17 +6969,6 @@ function initBaseInstance(instance, options) {
   ctx.$mpType = options.mpType;
   ctx.$mpPlatform = "mp-weixin";
   ctx.$scope = options.mpInstance;
-  {
-    Object.defineProperties(ctx, {
-      // only id
-      [VIRTUAL_HOST_ID]: {
-        get() {
-          const id = this.$scope.data[VIRTUAL_HOST_ID];
-          return id === void 0 ? "" : id;
-        }
-      }
-    });
-  }
   ctx.$mp = {};
   {
     ctx._self = {};
@@ -6665,12 +7136,11 @@ function parseApp(instance, parseAppOptions) {
       instance.$callHook(ON_LAUNCH, options);
     }
   };
-  const onErrorHandlers = wx.$onErrorHandlers;
-  if (onErrorHandlers) {
-    onErrorHandlers.forEach((fn) => {
-      injectHook(ON_ERROR, fn, internalInstance);
-    });
-    onErrorHandlers.length = 0;
+  const { onError } = internalInstance;
+  if (onError) {
+    internalInstance.appContext.config.errorHandler = (err) => {
+      instance.$callHook(ON_ERROR, err);
+    };
   }
   initLocale(instance);
   const vueOptions = instance.$.type;
@@ -6729,9 +7199,7 @@ function initAppLifecycle(appOptions, vm) {
   }
 }
 function initLocale(appVm) {
-  const locale = ref(
-    normalizeLocale(wx.getAppBaseInfo().language) || LOCALE_EN
-  );
+  const locale = ref(normalizeLocale(wx.getSystemInfoSync().language) || LOCALE_EN);
   Object.defineProperty(appVm, "$locale", {
     get() {
       return locale.value;
@@ -6806,19 +7274,11 @@ function initVirtualHostProps(options) {
   const properties = {};
   {
     if (options && options.virtualHost) {
-      properties[VIRTUAL_HOST_STYLE] = {
+      properties.virtualHostStyle = {
         type: null,
         value: ""
       };
-      properties[VIRTUAL_HOST_CLASS] = {
-        type: null,
-        value: ""
-      };
-      properties[VIRTUAL_HOST_HIDDEN] = {
-        type: null,
-        value: ""
-      };
-      properties[VIRTUAL_HOST_ID] = {
+      properties.virtualHostClass = {
         type: null,
         value: ""
       };
@@ -6991,7 +7451,7 @@ function applyOptions(componentOptions, vueOptions) {
   componentOptions.data = initData();
   componentOptions.behaviors = initBehaviors(vueOptions);
 }
-function parseComponent(vueOptions, { parse, mocks: mocks2, isPage: isPage2, isPageInProject, initRelation: initRelation2, handleLink: handleLink2, initLifetimes: initLifetimes2 }) {
+function parseComponent(vueOptions, { parse, mocks: mocks2, isPage: isPage2, initRelation: initRelation2, handleLink: handleLink2, initLifetimes: initLifetimes2 }) {
   vueOptions = vueOptions.default || vueOptions;
   const options = {
     multipleSlots: true,
@@ -7070,7 +7530,6 @@ function parsePage(vueOptions, parseOptions2) {
   const miniProgramPageOptions = parseComponent(vueOptions, {
     mocks: mocks2,
     isPage: isPage2,
-    isPageInProject: true,
     initRelation: initRelation2,
     handleLink: handleLink2,
     initLifetimes: initLifetimes2
@@ -7078,9 +7537,7 @@ function parsePage(vueOptions, parseOptions2) {
   initPageProps(miniProgramPageOptions, (vueOptions.default || vueOptions).props);
   const methods = miniProgramPageOptions.methods;
   methods.onLoad = function(query) {
-    {
-      this.options = query;
-    }
+    this.options = query;
     this.$page = {
       fullPath: addLeadingSlash(this.route + stringifyQuery(query))
     };
@@ -7251,5 +7708,7 @@ exports.o = o;
 exports.onHide = onHide;
 exports.onLaunch = onLaunch;
 exports.onShow = onShow;
+exports.p = p;
 exports.ref = ref;
+exports.resolveComponent = resolveComponent;
 exports.t = t;

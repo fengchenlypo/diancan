@@ -79,6 +79,7 @@ export default {
   padding-top: 20%;
   background: linear-gradient(to bottom, #f8f9fa, #e2e6ea);
   /* 背景渐变 */
+  height: 100vh;
   border-radius: 15px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }

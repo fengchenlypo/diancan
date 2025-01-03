@@ -1,0 +1,115 @@
+
+.main-container.data-v-88bf5328 {
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-top: 10%;
+  padding-bottom: 70px;
+  /* 给底部操作栏留出空间 */
+}
+.tab-content-section.data-v-88bf5328 {
+  background-color: #fff;
+  padding: 20px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  overflow-y: auto;
+}
+.tab-section.data-v-88bf5328 {
+  margin-bottom: 20px;
+}
+.segmented-control.data-v-88bf5328 {
+  margin-bottom: 10px;
+}
+.content-section.data-v-88bf5328 {
+  padding: 10px 20px;
+}
+.section.data-v-88bf5328 {
+  margin-bottom: 20px;
+}
+.address-group.data-v-88bf5328 {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.address-container.data-v-88bf5328,
+.picker-container.data-v-88bf5328,
+.input-container.data-v-88bf5328 {
+  padding: 10px 0;
+}
+.divider.data-v-88bf5328 {
+  height: 1px;
+  background-color: #ddd;
+  margin: 10px 0;
+}
+.picker.data-v-88bf5328 {
+  font-size: 16px;
+  color: #333;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  display: inline-block;
+  width: 100%;
+}
+.input.data-v-88bf5328 {
+  width: 100%;
+  height: auto;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  font-size: 16px;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+.order-summary.data-v-88bf5328 {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  flex: 1;
+  /* 让订单摘要区域占据剩余空间 */
+}
+.order-item.data-v-88bf5328 {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+.order-item-img.data-v-88bf5328 {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+.order-item-info.data-v-88bf5328 {
+  flex: 1;
+}
+.total.data-v-88bf5328 {
+  text-align: right;
+  font-size: 18px;
+  margin-top: 15px;
+}
+.bottom-bar.data-v-88bf5328 {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 10px 15px;
+  border-top: 1px solid #eee;
+  justify-content: space-between;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+.submit-button.data-v-88bf5328 {
+  margin-left: auto;
+  padding: 10px 30px;
+  background-color: #4cd964;
+  color: white;
+  border-radius: 20px;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}

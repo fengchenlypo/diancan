@@ -1,0 +1,114 @@
+
+/* 顶部导航栏 */
+.top-bar.data-v-e9b6fd63 {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #fc4353;
+  color: white;
+  margin-top: 10%;
+}
+.back-icon.data-v-e9b6fd63 {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+.page-title.data-v-e9b6fd63 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+/* 订单列表 */
+.order-list.data-v-e9b6fd63 {
+  padding: 20px;
+}
+.order-item.data-v-e9b6fd63 {
+  background-color: white;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+.order-header.data-v-e9b6fd63 {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+}
+.order-id.data-v-e9b6fd63 {
+  font-size: 16px;
+  color: #333;
+}
+.order-status.data-v-e9b6fd63 {
+  font-size: 16px;
+  font-weight: bold;
+}
+.order-status.pending.data-v-e9b6fd63 {
+  color: #fc4353;
+}
+.order-status.shipped.data-v-e9b6fd63 {
+  color: #4caf50;
+}
+
+/* 商品信息 */
+.order-details.data-v-e9b6fd63 {
+  padding: 10px;
+}
+.order-product.data-v-e9b6fd63 {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+.product-image.data-v-e9b6fd63 {
+  width: 60px;
+  height: 60px;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.product-info.data-v-e9b6fd63 {
+  margin-left: 10px;
+  flex: 1;
+}
+.product-title.data-v-e9b6fd63 {
+  font-size: 16px;
+  font-weight: bold;
+}
+.product-price.data-v-e9b6fd63,
+.product-quantity.data-v-e9b6fd63 {
+  font-size: 14px;
+  color: #888;
+}
+
+/* 订单底部 */
+.order-footer.data-v-e9b6fd63 {
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.total-price.data-v-e9b6fd63 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fc4353;
+}
+.order-actions.data-v-e9b6fd63 {
+  display: flex;
+  gap: 10px;
+}
+.pay-button.data-v-e9b6fd63,
+.confirm-button.data-v-e9b6fd63 {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.pay-button.data-v-e9b6fd63 {
+  background-color: #fc4353;
+  color: white;
+}
+.confirm-button.data-v-e9b6fd63 {
+  background-color: #4caf50;
+  color: white;
+}

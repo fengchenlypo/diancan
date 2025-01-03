@@ -17,6 +17,18 @@
 			"style": {
 				"navigationBarTitleText": "搜索"
 			}
+		},
+		{
+			"path": "pages/order/order",
+			"style": {
+				"navigationBarTitleText": "订单详情"
+			}
+		},
+		{
+			"path": "pages/orderList/orderList",
+			"style": {
+				"navigationBarTitleText": "订单列表"
+			}
 		}
 	],
 	"globalStyle": {
