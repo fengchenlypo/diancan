@@ -21,23 +21,16 @@ const _sfc_main = {
           ]
         },
         {
-          name: "川菜",
+          name: "荤菜",
           items: [
             { id: 105, title: "鱼香肉丝", desc: "酸甜可口，口感独特", price: 68, sales: 1100, image: "https://example.com/yuxiangrousi.png" }
           ]
         },
         {
-          name: "湘菜",
+          name: "素菜",
           items: [
             { id: 106, title: "剁椒鱼头", desc: "辣味十足，香味浓郁", price: 120, sales: 500, image: "https://example.com/duojiaoyutou.png" },
             { id: 107, title: "湘西外婆菜", desc: "口味独特，咸香适口", price: 38, sales: 950, image: "https://example.com/xiangxiwaipocai.png" }
-          ]
-        },
-        {
-          name: "素食",
-          items: [
-            { id: 108, title: "凉拌黄瓜", desc: "清爽可口，开胃小菜", price: 18, sales: 1600, image: "https://example.com/liangbanhuanggua.png" },
-            { id: 109, title: "素翅", desc: "绿色健康，美味可口", price: 28, sales: 1200, image: "https://example.com/suchi.png" }
           ]
         },
         {
@@ -77,7 +70,6 @@ const _sfc_main = {
     goToSearchPage() {
       common_vendor.index.navigateTo({
         url: "/pages/search/search"
-        // 跳转到搜索页面
       });
     }
   },

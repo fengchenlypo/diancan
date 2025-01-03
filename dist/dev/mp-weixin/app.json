@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/search/search"
+  ],
+  "window": {
+    "navigationStyle": "custom"
+  },
+  "usingComponents": {}
+}

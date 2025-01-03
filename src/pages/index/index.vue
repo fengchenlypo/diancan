@@ -1,20 +1,19 @@
 <template>
   <view class="content">
-    <!-- 顶部区域 -->
+    <!-- 顶部搜索栏 -->
     <view class="top">
       <view class="background"></view>
       <view class="foreground">
         <image class="touxian" src="../../static/touxian.png" />
-        <text class="title">知食分子</text>
+        <text class="title">美食广场</text>
       </view>
     </view>
 
-    <!-- 订单和分类导航部分 -->
+    <!-- 订单和分类导航容器 -->
     <view class="order-and-cate-container">
       <!-- 订单标题 -->
       <view class="order-title">
-        <text class="order-text">订单列表</text>
-        <!-- 搜索图片 -->
+        <text class="order-text">美食广场</text>
         <image class="search-img" src="../../static/search.png" @click="goToSearchPage" />
       </view>
 
@@ -77,23 +76,16 @@ export default {
           ],
         },
         {
-          name: '川菜',
+          name: '荤菜',
           items: [
             { id: 105, title: '鱼香肉丝', desc: '酸甜可口，口感独特', price: 68, sales: 1100, image: 'https://example.com/yuxiangrousi.png' },
           ],
         },
         {
-          name: '湘菜',
+          name: '素菜',
           items: [
             { id: 106, title: '剁椒鱼头', desc: '辣味十足，香味浓郁', price: 120, sales: 500, image: 'https://example.com/duojiaoyutou.png' },
             { id: 107, title: '湘西外婆菜', desc: '口味独特，咸香适口', price: 38, sales: 950, image: 'https://example.com/xiangxiwaipocai.png' },
-          ],
-        },
-        {
-          name: '素食',
-          items: [
-            { id: 108, title: '凉拌黄瓜', desc: '清爽可口，开胃小菜', price: 18, sales: 1600, image: 'https://example.com/liangbanhuanggua.png' },
-            { id: 109, title: '素翅', desc: '绿色健康，美味可口', price: 28, sales: 1200, image: 'https://example.com/suchi.png' },
           ],
         },
         {
@@ -131,7 +123,7 @@ export default {
     },
     goToSearchPage() {
       uni.navigateTo({
-        url: '/pages/search/search' // 跳转到搜索页面
+        url: '/pages/search/search'
       });
     }
   },
@@ -207,7 +199,7 @@ export default {
 }
 
 .order-title {
-  background-color: #fc4353;
+  background-color: white;
   padding: 15px;
   border-radius: 15px 15px 0 0;
   margin-top: 10px;
@@ -218,7 +210,6 @@ export default {
 
 .order-text {
   font-size: 18px;
-  color: white;
   font-weight: bold;
 }
 

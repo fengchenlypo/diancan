@@ -58,7 +58,7 @@
   z-index: 2;
 }
 .order-title.data-v-83a5a03c {
-  background-color: #fc4353;
+  background-color: white;
   padding: 15px;
   border-radius: 15px 15px 0 0;
   margin-top: 10px;
@@ -68,7 +68,6 @@
 }
 .order-text.data-v-83a5a03c {
   font-size: 18px;
-  color: white;
   font-weight: bold;
 }
 
