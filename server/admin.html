@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>点餐系统后台管理</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.13/theme-chalk/index.css" rel="stylesheet">
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.13/index.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f5f7fa;
+    }
+
+    .main-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 200px;
+      background-color: #304156;
+      color: white;
+      height: 100vh;
+      position: fixed;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 200px;
+      padding: 20px;
+    }
+
+    .header {
+      background: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .content {
+      background: white;
+      padding: 20px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+    }
+
+    .avatar-uploader .el-upload {
+      border: 1px dashed #d9d9d9;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .avatar-uploader .el-upload:hover {
+      border-color: #409EFF;
+    }
+
+    .avatar-uploader-icon {
+      font-size: 28px;
+      color: #8c939d;
+      width: 100px;
+      height: 100px;
+      line-height: 100px;
+      text-align: center;
+    }
+
+    .avatar {
+      width: 100px;
+      height: 100px;
+      display: block;
+    }
+
+    .cate-content {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="main-container">
+      <!-- 侧边栏 -->
+      <div class="sidebar">
+        <el-menu background-color="#304156" text-color="#fff" active-text-color="#409EFF" :default-active="activeMenu"
+          @select="handleSelect">
+          <el-menu-item index="products">
+            <i class="el-icon-goods"></i>
+            <span slot="title">商品管理</span>
+          </el-menu-item>
+          <el-menu-item index="categories">
+            <i class="el-icon-menu"></i>
+            <span slot="title">分类管理</span>
+          </el-menu-item>
+          <el-menu-item index="orders">
+            <i class="el-icon-s-order"></i>
+            <span slot="title">订单管理</span>
+          </el-menu-item>
+        </el-menu>
+      </div>
+
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <div class="header">
+          <h2>{{pageTitle}}</h2>
+        </div>
+        <div class="content">
+          <!-- 分类管理 -->
+          <div v-show="activeMenu === 'categories'">
+            <div style="margin-bottom: 20px">
+              <el-button type="primary" @click="showAddCategory">新增分类</el-button>
+            </div>
+            <el-table :data="categories" border>
+              <el-table-column prop="id" label="ID" width="80"></el-table-column>
+              <el-table-column prop="name" label="分类名称"></el-table-column>
+              <el-table-column label="操作" width="200">
+                <template slot-scope="scope">
+                  <el-button size="mini" @click="handleEditCategory(scope.row)">编辑</el-button>
+                  <el-button size="mini" type="danger" @click="handleDeleteCategory(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <!-- 商品管理 -->
+          <div v-show="activeMenu === 'products'">
+            <div style="margin-bottom: 20px">
+              <el-button type="primary" @click="showAddProduct">新增商品</el-button>
+            </div>
+            <el-table :data="products" border>
+              <el-table-column prop="id" label="ID" width="80"></el-table-column>
+              <el-table-column prop="title" label="商品名称"></el-table-column>
+              <el-table-column prop="category" label="所属分类"></el-table-column>
+              <el-table-column prop="price" label="价格"></el-table-column>
+              <el-table-column prop="original_price" label="原价"></el-table-column>
+              <el-table-column prop="desc" label="描述"></el-table-column>
+              <el-table-column label="操作" width="200">
+                <template slot-scope="scope">
+                  <el-button size="mini" @click="handleEditProduct(scope.row)">编辑</el-button>
+                  <el-button size="mini" type="danger" @click="handleDeleteProduct(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <!-- 订单管理 -->
+          <div v-show="activeMenu === 'orders'">
+            <el-table :data="orders" border>
+              <el-table-column prop="id" label="订单ID" width="80"></el-table-column>
+              <el-table-column prop="orderNo" label="订单编号"></el-table-column>
+              <el-table-column prop="createTime" label="下单时间"></el-table-column>
+              <el-table-column prop="totalAmount" label="总金额"></el-table-column>
+              <el-table-column prop="orderType" label="订单类型">
+                <template slot-scope="scope">
+                  {{scope.row.orderType}}
+                  <el-popover placement="right" width="200" trigger="hover">
+                    <div v-if="scope.row.orderDetails">
+                      <div v-if="scope.row.orderType === '外卖'">
+                        <p>电话：{{scope.row.orderDetails.phone}}</p>
+                        <p>地址：{{scope.row.orderDetails.address}}</p>
+                      </div>
+                      <div v-else-if="scope.row.orderType === '堂食'">
+                        <p>就餐方式：{{scope.row.orderDetails.diningType}}</p>
+                      </div>
+                      <div v-else-if="scope.row.orderType === '自提'">
+                        <p>电话：{{scope.row.orderDetails.phone}}</p>
+                        <p>自提时间：{{scope.row.orderDetails.pickupTime}}</p>
+                      </div>
+                    </div>
+                    <el-button slot="reference" type="text">查看详情</el-button>
+                  </el-popover>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态">
+                <template slot-scope="scope">
+                  <el-tag :type="scope.row.status === '已完成' ? 'success' : 'warning'">
+                    {{scope.row.status}}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="200">
+                <template slot-scope="scope">
+                  <el-button size="mini" @click="handleViewOrder(scope.row)">查看详情</el-button>
+                  <el-button size="mini" type="success" v-if="scope.row.status !== '已完成'"
+                    @click="handleCompleteOrder(scope.row)">完成订单</el-button>
+                  <el-button size="mini" type="danger" @click="handleDeleteOrder(scope.row)">删除订单</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品编辑对话框 -->
+    <el-dialog :title="productDialog.title" :visible.sync="productDialog.visible">
+      <el-form :model="productForm" ref="productForm" :rules="productRules">
+        <el-form-item label="商品名称" prop="title">
+          <el-input v-model="productForm.title"></el-input>
+        </el-form-item>
+        <el-form-item label="所属分类" prop="categoryId">
+          <el-select v-model="productForm.categoryId" placeholder="请选择分类">
+            <el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="商品价格" prop="price">
+          <el-input-number v-model="productForm.price" :precision="2" :step="0.1" :min="0"></el-input-number>
+        </el-form-item>
+        <el-form-item label="商品原价" prop="original_price">
+          <el-input-number v-model="productForm.original_price" :precision="2" :step="0.1" :min="0"></el-input-number>
+        </el-form-item>
+        <el-form-item label="商品描述" prop="desc">
+          <el-input type="textarea" v-model="productForm.desc"></el-input>
+        </el-form-item>
+        <el-form-item label="商品图片" prop="image">
+          <el-upload class="avatar-uploader" action="/api/upload" :show-file-list="false"
+            :on-success="handleImageSuccess">
+            <img v-if="productForm.image" :src="productForm.image" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="productDialog.visible = false">取消</el-button>
+        <el-button type="primary" @click="handleProductSubmit">确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 订单详情对话框 -->
+    <el-dialog title="订单详情" :visible.sync="orderDetailVisible">
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="订单编号">{{currentOrder.orderNo}}</el-descriptions-item>
+        <el-descriptions-item label="下单时间">{{currentOrder.createTime}}</el-descriptions-item>
+        <el-descriptions-item label="订单状态">{{currentOrder.status}}</el-descriptions-item>
+        <el-descriptions-item label="总金额">￥{{currentOrder.totalAmount}}</el-descriptions-item>
+      </el-descriptions>
+      <el-table :data="currentOrder.items" border style="margin-top: 20px">
+        <el-table-column prop="title" label="商品名称"></el-table-column>
+        <el-table-column prop="price" label="单价"></el-table-column>
+        <el-table-column prop="quantity" label="数量"></el-table-column>
+        <el-table-column label="小计">
+          <template slot-scope="scope">
+            ￥{{(scope.row.price * scope.row.quantity).toFixed(2)}}
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <!-- 分类编辑对话框 -->
+    <el-dialog :title="categoryDialog.title" :visible.sync="categoryDialog.visible">
+      <el-form :model="categoryForm" ref="categoryForm" :rules="categoryRules">
+        <el-form-item label="分类名称" prop="name">
+          <el-input v-model="categoryForm.name"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="categoryDialog.visible = false">取消</el-button>
+        <el-button type="primary" @click="handleCategorySubmit">确定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          activeMenu: 'products',
+          pageTitle: '商品管理',
+          categories: [],
+          products: [],
+          orders: [],
+          productDialog: {
+            visible: false,
+            title: '新增商品'
+          },
+          productForm: {
+            title: '',
+            categoryId: '',
+            price: 0,
+            original_price: 0,
+            desc: '',
+            image: ''
+          },
+          productRules: {
+            title: [
+              { required: true, message: '请输入商品名称', trigger: 'blur' }
+            ],
+            categoryId: [
+              { required: true, message: '请选择分类', trigger: 'change' }
+            ],
+            price: [
+              { required: true, message: '请输入价格', trigger: 'blur' }
+            ]
+          },
+          orderDetailVisible: false,
+          currentOrder: {
+            items: []
+          },
+          categoryDialog: {
+            visible: false,
+            title: '新增分类'
+          },
+          categoryForm: {
+            name: ''
+          },
+          categoryRules: {
+            name: [
+              { required: true, message: '请输入分类名称', trigger: 'blur' }
+            ]
+          }
+        }
+      },
+      methods: {
+        handleSelect(key) {
+          this.activeMenu = key;
+          switch (key) {
+            case 'categories':
+              this.pageTitle = '分类管理';
+              this.fetchCategories();
+              break;
+            case 'products':
+              this.pageTitle = '商品管理';
+              this.fetchProducts();
+              break;
+            case 'orders':
+              this.pageTitle = '订单管理';
+              this.fetchOrders();
+              break;
+          }
+        },
+
+        async fetchCategories() {
+          try {
+            const response = await axios.get('/api/categories');
+            this.categories = response.data;
+          } catch (error) {
+            this.$message.error('获取分类失败：' + error.message);
+          }
+        },
+
+        async fetchProducts() {
+          try {
+            const response = await axios.get('/api/categories');
+            this.products = [];
+            response.data.forEach(category => {
+              category.items.forEach(item => {
+                this.products.push({
+                  ...item,
+                  category: category.name,
+                  categoryId: category.id
+                });
+              });
+            });
+          } catch (error) {
+            this.$message.error('获取商品失败：' + error.message);
+          }
+        },
+
+        async fetchOrders() {
+          try {
+            const response = await axios.get('/api/admin/orders');
+            this.orders = response.data;
+          } catch (error) {
+            this.$message.error('获取订单失败：' + error.message);
+          }
+        },
+
+        showAddProduct() {
+          this.productDialog.title = '新增商品';
+          this.productForm = {
+            title: '',
+            categoryId: '',
+            price: 0,
+            original_price: 0,
+            desc: '',
+            image: ''
+          };
+          this.productDialog.visible = true;
+        },
+
+        handleEditProduct(row) {
+          this.productDialog.title = '编辑商品';
+          this.productForm = { ...row };
+          this.productDialog.visible = true;
+        },
+
+        async handleDeleteProduct(row) {
+          try {
+            await this.$confirm('确认删除该商品吗？');
+            await axios.delete(`/api/admin/products/${row.id}`);
+            this.$message.success('删除成功');
+            this.fetchProducts();
+          } catch (error) {
+            if (error !== 'cancel') {
+              this.$message.error('删除失败：' + error.message);
+            }
+          }
+        },
+
+        async handleProductSubmit() {
+          try {
+            const valid = await this.$refs.productForm.validate();
+            if (valid) {
+              if (this.productForm.id) {
+                await axios.put(`/api/admin/products/${this.productForm.id}`, this.productForm);
+              } else {
+                await axios.post('/api/admin/products', this.productForm);
+              }
+              this.$message.success('保存成功');
+              this.productDialog.visible = false;
+              this.fetchProducts();
+            }
+          } catch (error) {
+            this.$message.error('保存失败：' + error.message);
+          }
+        },
+
+        handleViewOrder(row) {
+          this.currentOrder = row;
+          this.orderDetailVisible = true;
+        },
+
+        async handleCompleteOrder(row) {
+          try {
+            await axios.put(`/api/admin/orders/${row.id}/complete`);
+            this.$message.success('订单已完成');
+            this.fetchOrders();
+          } catch (error) {
+            this.$message.error('操作失败：' + error.message);
+          }
+        },
+
+        async handleDeleteOrder(row) {
+          try {
+            await this.$confirm('确认删除该订单吗？此操作不可恢复');
+            await axios.delete(`/api/admin/orders/${row.id}`);
+            this.$message.success('删除成功');
+            this.fetchOrders();
+          } catch (error) {
+            if (error !== 'cancel') {
+              this.$message.error('删除失败：' + error.message);
+            }
+          }
+        },
+
+        handleImageSuccess(response, file) {
+          this.productForm.image = response.url;
+        },
+
+        showAddCategory() {
+          this.categoryDialog.title = '新增分类';
+          this.categoryForm = {
+            name: ''
+          };
+          this.categoryDialog.visible = true;
+        },
+
+        handleEditCategory(row) {
+          this.categoryDialog.title = '编辑分类';
+          this.categoryForm = { ...row };
+          this.categoryDialog.visible = true;
+        },
+
+        async handleDeleteCategory(row) {
+          try {
+            await this.$confirm('确认删除该分类吗？此操作不可恢复');
+            await axios.delete(`/api/admin/categories/${row.id}`);
+            this.$message.success('删除成功');
+            this.fetchCategories();
+          } catch (error) {
+            if (error !== 'cancel') {
+              this.$message.error('删除失败：' + error.message);
+            }
+          }
+        },
+
+        async handleCategorySubmit() {
+          try {
+            const valid = await this.$refs.categoryForm.validate();
+            if (valid) {
+              if (this.categoryForm.id) {
+                await axios.put(`/api/admin/categories/${this.categoryForm.id}`, this.categoryForm);
+              } else {
+                await axios.post('/api/admin/categories', this.categoryForm);
+              }
+              this.$message.success('保存成功');
+              this.categoryDialog.visible = false;
+              this.fetchCategories();
+            }
+          } catch (error) {
+            this.$message.error('保存失败：' + error.message);
+          }
+        }
+      },
+      mounted() {
+        this.fetchCategories();
+        this.fetchProducts();
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -47,72 +47,49 @@ const _sfc_main = {
         });
       }
     },
-    // 提交订单
+    // 确认订单
     async confirmOrder() {
-      const selectedItems = [];
-      this.categories.forEach((category) => {
-        category.items.forEach((item) => {
-          if (item.quantity > 0) {
-            selectedItems.push({
-              id: item.id,
-              quantity: item.quantity,
-              price: item.price
-            });
-          }
-        });
-      });
-      if (selectedItems.length === 0) {
+      const cartItems = this.cartItems;
+      if (cartItems.length === 0) {
         common_vendor.index.showToast({
-          title: "请先选择商品",
+          title: "请选择商品",
           icon: "none"
         });
         return;
       }
       try {
-        const result = await new Promise((resolve, reject) => {
-          common_vendor.index.request({
-            url: "http://localhost:3001/api/orders",
-            method: "POST",
-            data: {
-              items: selectedItems,
-              totalAmount: parseFloat(this.totalPrice)
-            },
-            success: (res) => {
-              resolve(res);
-            },
-            fail: (err) => {
-              reject(err);
-            }
-          });
+        const orderData = {
+          items: cartItems.map((item) => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          totalAmount: Number(this.totalPrice)
+        };
+        console.log("提交的订单数据:", orderData);
+        const response = await common_vendor.index.request({
+          url: "http://localhost:3001/api/orders",
+          method: "POST",
+          data: orderData
         });
-        if (result.statusCode === 200) {
-          common_vendor.index.navigateTo({
-            url: "/pages/order/order",
-            success: (function(res) {
-              res.eventChannel.emit("acceptDataFromOpenerPage", {
-                orderId: result.data.orderId,
-                orderNo: result.data.orderNo,
-                items: selectedItems.map((item) => {
-                  const product = this.findProduct(item.id);
-                  return {
-                    ...item,
-                    title: product.title,
-                    desc: product.desc,
-                    image: product.image
-                  };
-                }),
-                totalAmount: this.totalPrice
-              });
-            }).bind(this)
-          });
+        console.log("创建订单响应:", response);
+        if (response.data.success) {
           this.clearCart();
+          this.cartPopupVisible = false;
+          common_vendor.index.navigateTo({
+            url: `/pages/order/order?orderId=${response.data.orderId}`
+          });
         } else {
-          throw new Error(result.data.error || "下单失败");
+          common_vendor.index.showToast({
+            title: response.data.error || "创建订单失败",
+            icon: "none"
+          });
         }
       } catch (error) {
-        console.error("提交订单失败:", error);
+        console.error("创建订单失败:", error);
         common_vendor.index.showToast({
-          title: error.message || "提交订单失败",
+          title: "创建订单失败",
           icon: "none"
         });
       }

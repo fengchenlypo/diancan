@@ -158,80 +158,61 @@ export default {
       }
     },
 
-    // 提交订单
+    // 确认订单
     async confirmOrder() {
-      // 收集已选择的商品
-      const selectedItems = [];
-      this.categories.forEach(category => {
-        category.items.forEach(item => {
-          if (item.quantity > 0) {
-            selectedItems.push({
-              id: item.id,
-              quantity: item.quantity,
-              price: item.price
-            });
-          }
-        });
-      });
+      // 从购物车中获取选中的商品
+      const cartItems = this.cartItems;
 
-      if (selectedItems.length === 0) {
+      if (cartItems.length === 0) {
         uni.showToast({
-          title: '请先选择商品',
+          title: '请选择商品',
           icon: 'none'
         });
         return;
       }
 
       try {
-        const result = await new Promise((resolve, reject) => {
-          uni.request({
-            url: 'http://localhost:3001/api/orders',
-            method: 'POST',
-            data: {
-              items: selectedItems,
-              totalAmount: parseFloat(this.totalPrice)
-            },
-            success: (res) => {
-              resolve(res);
-            },
-            fail: (err) => {
-              reject(err);
-            }
-          });
+        // 准备订单数据
+        const orderData = {
+          items: cartItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          totalAmount: Number(this.totalPrice)
+        };
+
+        console.log('提交的订单数据:', orderData);
+
+        // 发送创建订单请求
+        const response = await uni.request({
+          url: 'http://localhost:3001/api/orders',
+          method: 'POST',
+          data: orderData
         });
 
-        if (result.statusCode === 200) {
-          // 跳转到订单页面
-          uni.navigateTo({
-            url: '/pages/order/order',
-            success: function (res) {
-              // 传递订单数据
-              res.eventChannel.emit('acceptDataFromOpenerPage', {
-                orderId: result.data.orderId,
-                orderNo: result.data.orderNo,
-                items: selectedItems.map(item => {
-                  const product = this.findProduct(item.id);
-                  return {
-                    ...item,
-                    title: product.title,
-                    desc: product.desc,
-                    image: product.image
-                  };
-                }),
-                totalAmount: this.totalPrice
-              });
-            }.bind(this)
-          });
+        console.log('创建订单响应:', response);
 
+        if (response.data.success) {
           // 清空购物车
           this.clearCart();
+          this.cartPopupVisible = false;
+
+          // 跳转到订单页面
+          uni.navigateTo({
+            url: `/pages/order/order?orderId=${response.data.orderId}`
+          });
         } else {
-          throw new Error(result.data.error || '下单失败');
+          uni.showToast({
+            title: response.data.error || '创建订单失败',
+            icon: 'none'
+          });
         }
       } catch (error) {
-        console.error('提交订单失败:', error);
+        console.error('创建订单失败:', error);
         uni.showToast({
-          title: error.message || '提交订单失败',
+          title: '创建订单失败',
           icon: 'none'
         });
       }
@@ -439,6 +420,10 @@ export default {
   position: relative;
   margin-top: -40px;
   z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 150px);
 }
 
 .order-title {
@@ -449,6 +434,9 @@ export default {
   text-align: center;
   display: flex;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .order-text {
@@ -462,6 +450,10 @@ export default {
   justify-content: space-between;
   padding: 10px 20px;
   align-items: center;
+  background-color: white;
+  position: sticky;
+  top: 53px;
+  z-index: 10;
 }
 
 .delivery-fee {
@@ -489,20 +481,17 @@ export default {
 .cate-container {
   display: flex;
   flex: 1;
-  padding-bottom: 70px;
-  /* 为底部订单栏留出空间 */
+  overflow: hidden;
+  height: calc(100vh - 280px);
 }
 
 .cate-left {
   width: 25%;
   border-right: 1px solid #ddd;
   padding: 10px;
-  position: sticky;
-  top: 0;
   background-color: white;
-  z-index: 2;
-  height: calc(100vh - 220px);
-  /* 减去顶部和底部的高度 */
+  overflow-y: auto;
+  height: 100%;
 }
 
 .cate-item {
@@ -520,8 +509,9 @@ export default {
   width: 75%;
   padding: 10px;
   overflow-y: auto;
-  height: calc(100vh - 220px);
-  /* 减去顶部和底部的高度 */
+  height: 100%;
+  background-color: white;
+  padding-bottom: 100px;
 }
 
 /* 商品内容部分 */
@@ -677,6 +667,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   z-index: 99;
+  height: 60px;
 }
 
 .order-info-bottom {

@@ -31,9 +31,11 @@ const _sfc_main = {
           });
         });
         if (res.statusCode === 200) {
+          console.log("搜索结果原始数据:", JSON.stringify(res.data, null, 2));
           const pages = getCurrentPages();
           const indexPage = pages[0];
           this.filteredItems = res.data.map((item) => {
+            console.log("处理单个商品原始数据:", JSON.stringify(item, null, 2));
             let quantity = 0;
             if (indexPage && indexPage.$vm && indexPage.$vm.categories) {
               const categories = indexPage.$vm.categories;
@@ -45,17 +47,21 @@ const _sfc_main = {
                 }
               }
             }
-            return {
+            const imageUrl = item.image || item.image_url || "http://localhost:3001/uploads/logo.png";
+            console.log("使用图片路径:", imageUrl);
+            const processedItem = {
               id: item.id,
               title: item.title,
-              desc: item.description,
-              price: item.price,
-              original_price: item.original_price,
-              sales: item.sales,
-              image: item.image_url,
-              category: item.category_name,
+              desc: item.description || "",
+              price: item.price || 0,
+              original_price: item.original_price || 0,
+              sales: item.sales || 0,
+              image: imageUrl,
+              category: item.category_name || "未分类",
               quantity
             };
+            console.log("处理后的商品数据:", JSON.stringify(processedItem, null, 2));
+            return processedItem;
           });
           if (this.filteredItems.length === 0) {
             common_vendor.index.showToast({
@@ -149,6 +155,11 @@ const _sfc_main = {
         total += item.price * item.quantity;
       });
       this.totalPrice = total.toFixed(2);
+    },
+    // 处理图片加载错误
+    handleImageError(item) {
+      console.log("图片加载失败:", item.image);
+      item.image = "http://localhost:3001/uploads/logo.png";
     }
   },
   // 页面加载时自动聚焦搜索框
@@ -177,27 +188,28 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.f($data.filteredItems, (item, k0, i0) => {
       return common_vendor.e({
         a: item.image,
-        b: common_vendor.t(item.title),
-        c: common_vendor.t(item.category),
-        d: common_vendor.t(item.desc),
-        e: common_vendor.t(item.price),
-        f: item.original_price
+        b: common_vendor.o(($event) => $options.handleImageError(item), item.id),
+        c: common_vendor.t(item.title),
+        d: common_vendor.t(item.category),
+        e: common_vendor.t(item.desc),
+        f: common_vendor.t(item.price),
+        g: item.original_price
       }, item.original_price ? {
-        g: common_vendor.t(item.original_price)
+        h: common_vendor.t(item.original_price)
       } : {}, {
-        h: common_vendor.t(item.sales),
-        i: item.quantity > 0
+        i: common_vendor.t(item.sales),
+        j: item.quantity > 0
       }, item.quantity > 0 ? {
-        j: common_vendor.o(($event) => $options.decreaseQuantity(item), item.id)
+        k: common_vendor.o(($event) => $options.decreaseQuantity(item), item.id)
       } : {}, {
-        k: item.quantity > 0
+        l: item.quantity > 0
       }, item.quantity > 0 ? {
-        l: item.quantity,
-        m: common_vendor.o(($event) => $options.updateQuantity(item, $event), item.id)
+        m: item.quantity,
+        n: common_vendor.o(($event) => $options.updateQuantity(item, $event), item.id)
       } : {}, {
-        n: common_vendor.o(($event) => $options.increaseQuantity(item), item.id),
-        o: !item.quantity ? 1 : "",
-        p: item.id
+        o: common_vendor.o(($event) => $options.increaseQuantity(item), item.id),
+        p: !item.quantity ? 1 : "",
+        q: item.id
       });
     })
   } : {}, {

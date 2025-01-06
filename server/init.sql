@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS orders (
   total_amount DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
   status TINYINT DEFAULT 0 COMMENT '订单状态：0-待支付，1-已支付，2-已完成，3-已取消',
   remark TEXT COMMENT '备注',
+  order_type VARCHAR(20) COMMENT '订单类型：外卖、堂食、自提',
+  order_details TEXT COMMENT '订单详情：JSON格式，存储不同类型订单的特定信息',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 );

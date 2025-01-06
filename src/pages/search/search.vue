@@ -11,7 +11,7 @@
     <view v-if="filteredItems.length > 0" class="items-list">
       <view v-for="item in filteredItems" :key="item.id" class="item">
         <view class="item-image-container">
-          <image class="item-image" :src="item.image" mode="aspectFill" />
+          <image class="item-image" :src="item.image" mode="aspectFill" @error="handleImageError(item)" />
         </view>
         <view class="item-info">
           <text class="item-title">{{ item.title }}</text>
@@ -76,12 +76,14 @@ export default {
         });
 
         if (res.statusCode === 200) {
+          console.log('搜索结果原始数据:', JSON.stringify(res.data, null, 2));
           // 获取首页的商品数量状态
           const pages = getCurrentPages();
           // 首页通常是第一个页面
           const indexPage = pages[0];
 
           this.filteredItems = res.data.map(item => {
+            console.log('处理单个商品原始数据:', JSON.stringify(item, null, 2));
             // 如果在首页找到相同ID的商品，使用其数量
             let quantity = 0;
             if (indexPage && indexPage.$vm && indexPage.$vm.categories) {
@@ -95,17 +97,24 @@ export default {
               }
             }
 
-            return {
+            // 直接使用服务器返回的图片路径
+            const imageUrl = item.image || item.image_url || 'http://localhost:3001/uploads/logo.png';
+            console.log('使用图片路径:', imageUrl);
+
+            const processedItem = {
               id: item.id,
               title: item.title,
-              desc: item.description,
-              price: item.price,
-              original_price: item.original_price,
-              sales: item.sales,
-              image: item.image_url,
-              category: item.category_name,
+              desc: item.description || '',
+              price: item.price || 0,
+              original_price: item.original_price || 0,
+              sales: item.sales || 0,
+              image: imageUrl,
+              category: item.category_name || '未分类',
               quantity: quantity
             };
+
+            console.log('处理后的商品数据:', JSON.stringify(processedItem, null, 2));
+            return processedItem;
           });
 
           if (this.filteredItems.length === 0) {
@@ -216,6 +225,13 @@ export default {
         total += item.price * item.quantity;
       });
       this.totalPrice = total.toFixed(2);
+    },
+
+    // 处理图片加载错误
+    handleImageError(item) {
+      console.log('图片加载失败:', item.image);
+      // 设置为服务器上的默认图片
+      item.image = 'http://localhost:3001/uploads/logo.png';
     }
   },
   // 页面加载时自动聚焦搜索框
