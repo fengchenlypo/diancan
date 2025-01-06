@@ -5,7 +5,7 @@ const path = require('path');
 const formidable = require('formidable');
 
 // 创建上传目录
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = path.join(__dirname, '../src/static');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
@@ -270,6 +270,9 @@ const server = http.createServer((req, res) => {
         o.total_amount,
         o.status,
         o.create_time,
+        o.order_type,
+        o.order_details,
+        o.remark,
         oi.product_id,
         oi.product_title,
         oi.quantity,
@@ -289,12 +292,49 @@ const server = http.createServer((req, res) => {
       const orders = new Map();
       results.forEach(row => {
         if (!orders.has(row.id)) {
+          // 解析订单详情
+          let orderDetails = {};
+          let orderType = '未知';
+          try {
+            if (row.order_details) {
+              orderDetails = typeof row.order_details === 'string' 
+                ? JSON.parse(row.order_details) 
+                : row.order_details;
+            }
+            switch(row.order_type) {
+              case 'takeout':
+                orderType = '外卖';
+                break;
+              case 'dine_in':
+                orderType = '堂食';
+                break;
+              case 'pickup':
+                orderType = '自提';
+                break;
+            }
+          } catch (e) {
+            console.error('解析订单详情失败:', e);
+          }
+
+          // 格式化创建时间
+          const createTime = new Date(row.create_time).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+
           orders.set(row.id, {
             id: row.id,
             orderNo: row.order_no,
             totalAmount: row.total_amount,
             status: row.status === 2 ? '已完成' : '待处理',
-            createTime: row.create_time,
+            createTime: createTime,
+            orderType: orderType,
+            orderDetails: orderDetails,
+            remark: row.remark || '',
             items: []
           });
         }
@@ -304,7 +344,8 @@ const server = http.createServer((req, res) => {
             productId: row.product_id,
             title: row.product_title,
             quantity: row.quantity,
-            price: row.price
+            price: row.price,
+            subtotal: (row.price * row.quantity).toFixed(2)
           });
         }
       });
@@ -619,30 +660,70 @@ const server = http.createServer((req, res) => {
       }
     });
   } else if (req.url === '/api/upload' && req.method === 'POST') {
-    const form = new formidable.IncomingForm();
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
+    const form = new formidable.IncomingForm({
+      uploadDir: uploadDir,
+      keepExtensions: true,
+      maxFileSize: 5 * 1024 * 1024 // 限制5MB
+    });
+
+    console.log('开始处理文件上传...');
+    console.log('上传目录:', uploadDir);
+
+    // 确保上传目录存在
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
     form.parse(req, (err, fields, files) => {
       if (err) {
+        console.error('文件上传错误:', err);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: '文件上传失败' }));
+        res.end(JSON.stringify({ error: '文件上传失败', details: err.message }));
         return;
       }
 
-      const file = files.file;
-      if (!file) {
+      console.log('接收到的文件:', files);
+      
+      // 获取上传的文件对象
+      const fileArray = files.file;
+      if (!fileArray || !fileArray[0]) {
+        console.error('没有文件被上传');
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: '没有文件被上传' }));
         return;
       }
 
-      // 生成文件URL
-      const fileName = path.basename(file.path);
-      const fileUrl = `/uploads/${fileName}`;
+      try {
+        const file = fileArray[0];
+        console.log('完整的文件对象:', file);
+        
+        // 获取文件信息
+        const newFileName = `${Date.now()}${path.extname(file.originalFilename || '') || '.png'}`;
+        const newPath = path.join(uploadDir, newFileName);
+        
+        console.log('文件信息:', {
+          原始名称: file.originalFilename || '未知',
+          临时路径: file.filepath,
+          新路径: newPath,
+          文件大小: file.size,
+          文件类型: file.mimetype
+        });
 
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ url: fileUrl }));
+        // 移动文件到目标目录
+        fs.copyFileSync(file.filepath, newPath);
+        fs.unlinkSync(file.filepath); // 删除临时文件
+
+        // 生成文件URL
+        const fileUrl = `/static/${newFileName}`;
+        console.log('生成的文件URL:', fileUrl);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ url: fileUrl }));
+      } catch (error) {
+        console.error('处理上传文件时发生错误:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: '处理文件失败', details: error.message }));
+      }
     });
   } else if (req.url.startsWith('/uploads/') && req.method === 'GET') {
     // 处理图片访问请求
@@ -786,7 +867,7 @@ const server = http.createServer((req, res) => {
 // 启动服务器
 const PORT = 3001;
 server.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
+  console.log(`后台管理系统在 http://localhost:${PORT}/admin 运行`);
 }); 
 
 // 添加状态文本转换函数

@@ -534,6 +534,14 @@ export default {
         this.createTime = new Date().toLocaleString();
       });
     }
+  },
+  onUnload() {
+    // 返回时更新首页数据
+    const pages = getCurrentPages();
+    const indexPage = pages[0];
+    if (indexPage && indexPage.$vm) {
+      indexPage.$vm.fetchCategories();
+    }
   }
 };
 </script>

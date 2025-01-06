@@ -124,7 +124,7 @@ export default {
     // 获取菜品分类和列表
     async fetchCategories() {
       try {
-        const result = await new Promise((resolve, reject) => {
+        const res = await new Promise((resolve, reject) => {
           uni.request({
             url: 'http://localhost:3001/api/categories',
             method: 'GET',
@@ -137,22 +137,20 @@ export default {
           });
         });
 
-        if (result.statusCode === 200) {
-          this.categories = result.data.map(category => ({
+        if (res.statusCode === 200) {
+          this.categories = res.data.map(category => ({
             ...category,
             items: category.items.map(item => ({
               ...item,
               quantity: 0
             }))
           }));
-          this.updateSelectedItems();
-        } else {
-          throw new Error(result.data.error || '获取数据失败');
+          this.updateTotalPrice();
         }
       } catch (error) {
-        console.error('获取菜品列表失败:', error);
+        console.error('获取分类数据失败:', error);
         uni.showToast({
-          title: '获取菜品列表失败',
+          title: '获取数据失败',
           icon: 'none'
         });
       }

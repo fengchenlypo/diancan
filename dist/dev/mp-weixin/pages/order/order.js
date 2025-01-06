@@ -389,6 +389,13 @@ const _sfc_main = {
         this.createTime = (/* @__PURE__ */ new Date()).toLocaleString();
       });
     }
+  },
+  onUnload() {
+    const pages = getCurrentPages();
+    const indexPage = pages[0];
+    if (indexPage && indexPage.$vm) {
+      indexPage.$vm.fetchCategories();
+    }
   }
 };
 if (!Array) {

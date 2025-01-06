@@ -164,39 +164,52 @@
           <!-- 订单管理 -->
           <div v-show="activeMenu === 'orders'">
             <el-table :data="orders" border>
-              <el-table-column prop="id" label="订单ID" width="80"></el-table-column>
-              <el-table-column prop="orderNo" label="订单编号"></el-table-column>
-              <el-table-column prop="createTime" label="下单时间"></el-table-column>
-              <el-table-column prop="totalAmount" label="总金额"></el-table-column>
-              <el-table-column prop="orderType" label="订单类型">
+              <el-table-column prop="orderNo" label="订单编号" width="180"></el-table-column>
+              <el-table-column prop="createTime" label="下单时间" width="180"></el-table-column>
+              <el-table-column prop="orderType" label="订单类型" width="100">
                 <template slot-scope="scope">
-                  {{scope.row.orderType}}
-                  <el-popover placement="right" width="200" trigger="hover">
-                    <div v-if="scope.row.orderDetails">
-                      <div v-if="scope.row.orderType === '外卖'">
-                        <p>电话：{{scope.row.orderDetails.phone}}</p>
-                        <p>地址：{{scope.row.orderDetails.address}}</p>
-                      </div>
-                      <div v-else-if="scope.row.orderType === '堂食'">
-                        <p>就餐方式：{{scope.row.orderDetails.diningType}}</p>
-                      </div>
-                      <div v-else-if="scope.row.orderType === '自提'">
-                        <p>电话：{{scope.row.orderDetails.phone}}</p>
-                        <p>自提时间：{{scope.row.orderDetails.pickupTime}}</p>
-                      </div>
-                    </div>
-                    <el-button slot="reference" type="text">查看详情</el-button>
-                  </el-popover>
+                  <el-tag
+                    :type="scope.row.orderType === '外卖' ? 'danger' : scope.row.orderType === '堂食' ? 'warning' : 'success'">
+                    {{scope.row.orderType}}
+                  </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="status" label="状态">
+              <el-table-column label="订单详情" width="200">
+                <template slot-scope="scope">
+                  <div v-if="scope.row.orderDetails">
+                    <div v-if="scope.row.orderType === '外卖'">
+                      <p>电话：{{scope.row.orderDetails.phone}}</p>
+                      <p>地址：{{scope.row.orderDetails.address}}</p>
+                    </div>
+                    <div v-else-if="scope.row.orderType === '堂食'">
+                      <p>就餐方式：{{scope.row.orderDetails.diningType}}</p>
+                      <p>就餐时间：{{scope.row.orderDetails.diningTime || '-'}}</p>
+                    </div>
+                    <div v-else-if="scope.row.orderType === '自提'">
+                      <p>电话：{{scope.row.orderDetails.phone}}</p>
+                      <p>自提时间：{{scope.row.orderDetails.pickupTime}}</p>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="totalAmount" label="总金额" width="100">
+                <template slot-scope="scope">
+                  ￥{{scope.row.totalAmount}}
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="100">
                 <template slot-scope="scope">
                   <el-tag :type="scope.row.status === '已完成' ? 'success' : 'warning'">
                     {{scope.row.status}}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="200">
+              <el-table-column prop="remark" label="备注" width="150">
+                <template slot-scope="scope">
+                  {{scope.row.remark || '-'}}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="200" fixed="right">
                 <template slot-scope="scope">
                   <el-button size="mini" @click="handleViewOrder(scope.row)">查看详情</el-button>
                   <el-button size="mini" type="success" v-if="scope.row.status !== '已完成'"
@@ -206,6 +219,53 @@
               </el-table-column>
             </el-table>
           </div>
+
+          <!-- 订单详情对话框 -->
+          <el-dialog title="订单详情" :visible.sync="orderDetailVisible" width="600px">
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="订单编号">{{currentOrder.orderNo}}</el-descriptions-item>
+              <el-descriptions-item label="下单时间">{{currentOrder.createTime}}</el-descriptions-item>
+              <el-descriptions-item label="订单状态">
+                <el-tag :type="currentOrder.status === '已完成' ? 'success' : 'warning'">
+                  {{currentOrder.status}}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="订单类型">
+                <el-tag
+                  :type="currentOrder.orderType === '外卖' ? 'danger' : currentOrder.orderType === '堂食' ? 'warning' : 'success'">
+                  {{currentOrder.orderType}}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="订单详情">
+                <div v-if="currentOrder.orderDetails">
+                  <div v-if="currentOrder.orderType === '外卖'">
+                    <p>电话：{{currentOrder.orderDetails.phone}}</p>
+                    <p>地址：{{currentOrder.orderDetails.address}}</p>
+                  </div>
+                  <div v-else-if="currentOrder.orderType === '堂食'">
+                    <p>就餐方式：{{currentOrder.orderDetails.diningType}}</p>
+                    <p>就餐时间：{{currentOrder.orderDetails.diningTime || '-'}}</p>
+                  </div>
+                  <div v-else-if="currentOrder.orderType === '自提'">
+                    <p>电话：{{currentOrder.orderDetails.phone}}</p>
+                    <p>自提时间：{{currentOrder.orderDetails.pickupTime}}</p>
+                  </div>
+                </div>
+              </el-descriptions-item>
+              <el-descriptions-item label="备注">{{currentOrder.remark || '-'}}</el-descriptions-item>
+              <el-descriptions-item label="总金额">￥{{currentOrder.totalAmount}}</el-descriptions-item>
+            </el-descriptions>
+            <el-table :data="currentOrder.items" border style="margin-top: 20px">
+              <el-table-column prop="title" label="商品名称"></el-table-column>
+              <el-table-column prop="price" label="单价">
+                <template slot-scope="scope">￥{{scope.row.price}}</template>
+              </el-table-column>
+              <el-table-column prop="quantity" label="数量"></el-table-column>
+              <el-table-column prop="subtotal" label="小计">
+                <template slot-scope="scope">￥{{scope.row.subtotal}}</template>
+              </el-table-column>
+            </el-table>
+          </el-dialog>
         </div>
       </div>
     </div>
@@ -243,26 +303,6 @@
         <el-button @click="productDialog.visible = false">取消</el-button>
         <el-button type="primary" @click="handleProductSubmit">确定</el-button>
       </div>
-    </el-dialog>
-
-    <!-- 订单详情对话框 -->
-    <el-dialog title="订单详情" :visible.sync="orderDetailVisible">
-      <el-descriptions :column="1" border>
-        <el-descriptions-item label="订单编号">{{currentOrder.orderNo}}</el-descriptions-item>
-        <el-descriptions-item label="下单时间">{{currentOrder.createTime}}</el-descriptions-item>
-        <el-descriptions-item label="订单状态">{{currentOrder.status}}</el-descriptions-item>
-        <el-descriptions-item label="总金额">￥{{currentOrder.totalAmount}}</el-descriptions-item>
-      </el-descriptions>
-      <el-table :data="currentOrder.items" border style="margin-top: 20px">
-        <el-table-column prop="title" label="商品名称"></el-table-column>
-        <el-table-column prop="price" label="单价"></el-table-column>
-        <el-table-column prop="quantity" label="数量"></el-table-column>
-        <el-table-column label="小计">
-          <template slot-scope="scope">
-            ￥{{(scope.row.price * scope.row.quantity).toFixed(2)}}
-          </template>
-        </el-table-column>
-      </el-table>
     </el-dialog>
 
     <!-- 分类编辑对话框 -->
