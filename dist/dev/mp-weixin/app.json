@@ -1,12 +1,15 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/search/search",
     "pages/order/order",
-    "pages/orderList/orderList"
+    "pages/orderList/orderList",
+    "pages/search/search"
   ],
   "window": {
-    "navigationStyle": "custom"
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "知食分子点餐",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F8F8F8"
   },
   "usingComponents": {}
 }

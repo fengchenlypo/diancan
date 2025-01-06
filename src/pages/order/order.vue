@@ -13,17 +13,22 @@
         <!-- 外卖 -->
         <view v-show="current === 0" class="section">
           <view class="input-container">
-            <input class="input" type="text" placeholder="添加收货地址" />
+            <text class="label">联系电话：</text>
+            <input class="input" type="text" placeholder="请输入手机号码" v-model="phone" />
+          </view>
+          <view class="input-container">
+            <text class="label">收货地址：</text>
+            <input class="input" type="text" placeholder="请输入详细地址" v-model="address" />
           </view>
         </view>
 
         <!-- 堂食 -->
         <view v-show="current === 1" class="section">
           <view class="input-container">
-            <picker mode="selector" :range="array" @change="bindChange">
-              <view class="picker">就餐方式：{{ array[index] }}</view>
+            <text class="label">就餐方式：</text>
+            <picker mode="selector" :range="array" @change="bindChange" class="picker-box">
+              <view class="picker">{{ array[index] }}</view>
             </picker>
-            
           </view>
         </view>
 
@@ -35,14 +40,15 @@
           </view>
           <view class="divider"></view>
           <view class="picker-container">
-            <picker mode="multiSelector" :range="dateRange" @change="onMultiChange">
-              <view class="picker">请选择时间：{{ selectedDateTime }}</view>
+            <text class="label">自提时间：</text>
+            <picker mode="multiSelector" :range="dateRange" @change="onMultiChange" class="picker-box">
+              <view class="picker">{{ selectedDateTime || '请选择自提时间' }}</view>
             </picker>
           </view>
           <view class="divider"></view>
           <view class="input-container">
-            <text class="label">联系方式：</text>
-            <input class="input" type="text" placeholder="请填写联系电话" />
+            <text class="label">联系电话：</text>
+            <input class="input" type="text" placeholder="请输入手机号码" v-model="phone" />
           </view>
         </view>
       </view>
@@ -50,30 +56,38 @@
 
     <!-- 订单摘要 -->
     <view class="order-summary">
-      <text class="h2">一共 {{ changdu }} 件商品</text>
-      <view v-for="(item, index) in diandan" :key="index" class="order-item">
-        <image :src="item.URL" class="order-item-img" />
+      <view class="order-header" v-if="orderNo">
+        <text class="order-no">订单号：{{ orderNo }}</text>
+        <text class="order-status">{{ statusText }}</text>
+      </view>
+
+      <text class="h2">一共 {{ totalItems }} 件商品</text>
+      <view v-for="(item, index) in selectedItems" :key="index" class="order-item">
+        <image :src="item.image" class="order-item-img" />
         <view class="order-item-info">
-          <text class="order-item-name">{{ item.name }}</text>
-          <text class="order-item-quantity">x{{ item.shuliang }}</text>
+          <text class="order-item-name">{{ item.title }}</text>
+          <text class="order-item-quantity">x{{ item.quantity }}</text>
         </view>
         <text class="order-item-price">¥{{ item.price }}</text>
       </view>
 
       <view class="total">
-        <text>合计：¥{{ qiuhe }}</text>
+        <text>合计：¥{{ totalAmount }}</text>
       </view>
 
       <view class="beizhu">
         <text>备注</text>
-        <input type="text" placeholder="可填可不填" class="remark-input" />
+        <input type="text" placeholder="可填可不填" class="remark-input" v-model="remark" />
       </view>
     </view>
 
     <!-- 底部操作栏 -->
     <view class="bottom-bar">
-      <text class="h2">合计：¥{{ qiuhe }}</text>
-      <button class="submit-button" @click="navigateToTarget">提交订单</button>
+      <text class="h2">合计：¥{{ totalAmount }}</text>
+      <button v-if="orderStatus === 0" class="submit-button" @click="handlePayment">立即支付</button>
+      <button v-else-if="orderStatus === 1" class="submit-button completed">已支付</button>
+      <button v-else-if="orderStatus === 2" class="submit-button completed">已完成</button>
+      <button v-else class="submit-button cancelled">已取消</button>
     </view>
   </view>
 </template>
@@ -86,33 +100,175 @@ export default {
       index: 0,
       items: ['外卖', '堂食', '自提'],
       current: 0,
-      diandan: [
-        { id: 1, URL: '../../static/kelei.png', name: '年糕', shuliang: 2, price: 100 },
-        { id: 2, URL: '../../static/kelei.png', name: '鸡翅', shuliang: 2, price: 100 },
-        { id: 3, URL: '../../static/kelei.png', name: '火锅', shuliang: 2, price: 100 }
+      diandan: [],
+      // 自提时间选择器数据
+      dateRange: [
+        ['今天', '明天', '后天'],
+        ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00']
       ],
-      dateRange: [['今天', '01月03日', '01月04日'], ['10:00', '10:30', '11:00']],
       selectedDateTime: '',
-      index1: [0, 0]
+      index1: [0, 0],
+      address: '',
+      phone: '',
+      remark: '',
+      deliveryType: '外卖',
+      selectedItems: [],
+      orderNo: '',
+      orderId: null,
+      totalAmount: '0.00',
+      orderStatus: 0,
+      statusText: '待支付',
+      formValid: false
     };
   },
   methods: {
+    // 验证手机号
+    validatePhone() {
+      const phoneReg = /^1[3-9]\d{9}$/;
+      return phoneReg.test(this.phone);
+    },
+
+    // 验证地址
+    validateAddress() {
+      return this.address.length >= 5;
+    },
+
+    // 验证自提时间
+    validatePickupTime() {
+      return this.selectedDateTime !== '';
+    },
+
+    // 验证表单
+    validateForm() {
+      if (this.current === 0) { // 外卖
+        if (!this.validatePhone()) {
+          uni.showToast({
+            title: '请输入正确的手机号码',
+            icon: 'none'
+          });
+          return false;
+        }
+        if (!this.validateAddress()) {
+          uni.showToast({
+            title: '请输入详细的收货地址',
+            icon: 'none'
+          });
+          return false;
+        }
+      } else if (this.current === 1) { // 堂食
+        // 堂食只需要选择就餐方式，已经有默认值，无需验证
+      } else if (this.current === 2) { // 自提
+        if (!this.validatePhone()) {
+          uni.showToast({
+            title: '请输入正确的手机号码',
+            icon: 'none'
+          });
+          return false;
+        }
+        if (!this.validatePickupTime()) {
+          uni.showToast({
+            title: '请选择自提时间',
+            icon: 'none'
+          });
+          return false;
+        }
+      }
+      return true;
+    },
+
+    // 处理支付前的验证
+    async handlePayment() {
+      if (!this.validateForm()) {
+        return;
+      }
+
+      try {
+        // 准备订单数据
+        const orderData = {
+          items: this.selectedItems.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          totalAmount: this.totalAmount,
+          deliveryType: this.items[this.current],
+          address: this.current === 0 ? this.address : null,
+          phone: (this.current === 0 || this.current === 2) ? this.phone : null,
+          diningMode: this.current === 1 ? this.array[this.index] : null,
+          pickupTime: this.current === 2 ? this.selectedDateTime : null,
+          remark: this.remark || null
+        };
+
+        const result = await new Promise((resolve, reject) => {
+          uni.request({
+            url: 'http://localhost:3001/api/orders/' + this.orderId + '/pay',
+            method: 'POST',
+            data: orderData,
+            success: (res) => {
+              resolve(res);
+            },
+            fail: (err) => {
+              reject(err);
+            }
+          });
+        });
+
+        if (result.statusCode === 200) {
+          uni.showToast({
+            title: '支付成功',
+            icon: 'success'
+          });
+
+          // 更新订单状态
+          this.orderStatus = 1;
+          this.statusText = '已支付';
+
+          // 延迟跳转到订单列表页
+          setTimeout(() => {
+            uni.redirectTo({
+              url: '/pages/orderList/orderList'
+            });
+          }, 1500);
+        } else {
+          throw new Error(result.data.error || '支付失败');
+        }
+      } catch (error) {
+        uni.showToast({
+          title: error.message || '支付失败',
+          icon: 'none'
+        });
+      }
+    },
+
+    // 生成日期范围
+    generateDateRange() {
+      const dates = ['今天', '明天', '后天'];
+      const times = [];
+      for (let hour = 10; hour <= 20; hour++) {
+        times.push(`${hour}:00`);
+        times.push(`${hour}:30`);
+      }
+      this.dateRange = [dates, times];
+    },
+
+    onMultiChange(e) {
+      this.index1 = e.detail.value;
+      const date = this.dateRange[0][this.index1[0]];
+      const time = this.dateRange[1][this.index1[1]];
+      this.selectedDateTime = `${date} ${time}`;
+    },
+
+    // 切换配送方式时重置表单
     onClickItem(e) {
       if (this.current !== e.currentIndex) {
         this.current = e.currentIndex;
+        this.deliveryType = this.items[e.currentIndex];
+        // 重置表单数据
+        this.phone = '';
+        this.address = '';
+        this.selectedDateTime = '';
+        this.index = 0;
       }
-    },
-    bindChange(e) {
-      this.index = e.detail.value;
-    },
-    onMultiChange(e) {
-      this.index1 = e.detail.value;
-      this.selectedDateTime = `${this.dateRange[0][this.index1[0]]} ${this.dateRange[1][this.index1[1]]}`;
-    },
-    navigateToTarget() {
-      uni.navigateTo({
-        url: '/pages/index/new_file'
-      });
     }
   },
   computed: {
@@ -120,7 +276,29 @@ export default {
       return this.diandan.length;
     },
     qiuhe() {
-      return this.diandan.reduce((sum, diandan) => sum + diandan.price, 0);
+      return this.diandan.reduce((sum, item) => sum + (item.price * item.shuliang), 0);
+    },
+    totalItems() {
+      return this.selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+    }
+  },
+  onLoad(options) {
+    // 如果是从订单列表页面进入，直接获取订单详情
+    if (options.orderId) {
+      this.orderId = options.orderId;
+      this.fetchOrderDetail();
+    } else {
+      // 从上一页传递的数据中获取选中的商品
+      const eventChannel = this.getOpenerEventChannel();
+      eventChannel.on('acceptDataFromOpenerPage', (data) => {
+        this.selectedItems = data.items;
+        this.totalAmount = data.totalAmount;
+        this.orderNo = data.orderNo;
+        this.orderId = data.orderId;
+        // 新建订单默认状态为待支付
+        this.orderStatus = 0;
+        this.statusText = '待支付';
+      });
     }
   }
 };
@@ -257,5 +435,33 @@ export default {
   border-radius: 20px;
   font-size: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 15px;
+}
+
+.order-no {
+  font-size: 14px;
+  color: #666;
+}
+
+.order-status {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fc4353;
+}
+
+.submit-button.completed {
+  background-color: #4caf50;
+}
+
+.submit-button.cancelled {
+  background-color: #9e9e9e;
 }
 </style>

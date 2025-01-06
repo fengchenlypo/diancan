@@ -1,5 +1,7 @@
 {
-  "navigationBarTitleText": "订单详情",
+  "navigationBarTitleText": "订单确认",
+  "navigationBarBackgroundColor": "#FFFFFF",
+  "navigationBarTextStyle": "black",
   "usingComponents": {
     "uni-segmented-control": "../../uni_modules/uni-segmented-control/components/uni-segmented-control/uni-segmented-control"
   }
