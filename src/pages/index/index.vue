@@ -39,7 +39,7 @@
         <!-- 右侧商品列表 -->
         <scroll-view class="cate-right" scroll-y>
           <view v-for="(item, idx) in filteredItems" :key="item.id" class="cate-content">
-            <image :src="item.image" mode="aspectFill" class="item-image" lazy-load />
+            <image :src="`http://localhost:3001/${item.image}`" mode="aspectFill" class="item-image" lazy-load />
             <view class="item-info">
               <text class="item-title">{{ item.title }}</text>
               <view class="item-desc">
@@ -88,7 +88,7 @@
         </view>
         <view class="cart-items">
           <view v-for="(item, idx) in cartItems" :key="idx" class="cart-item">
-            <image :src="item.image" class="cart-item-image" />
+            <image :src="`http://localhost:3001/${item.image}`" class="cart-item-image" />
             <view class="cart-item-info">
               <text class="cart-item-title">{{ item.title }}</text>
               <text class="cart-item-price">¥{{ item.price }}</text>
@@ -451,7 +451,8 @@ export default {
   background-color: white;
   position: sticky;
   top: 53px;
-  z-index: 10;
+  z-index: 11;
+  /* 提高 z-index 值 */
 }
 
 .delivery-fee {
@@ -490,6 +491,11 @@ export default {
   background-color: white;
   overflow-y: auto;
   height: 100%;
+  position: sticky;
+  left: 0;
+  top: calc(53px + 1px);
+  /* 加上边框的宽度 */
+  z-index: 9;
 }
 
 .cate-item {

@@ -11,7 +11,8 @@
     <view v-if="filteredItems.length > 0" class="items-list">
       <view v-for="item in filteredItems" :key="item.id" class="item">
         <view class="item-image-container">
-          <image class="item-image" :src="item.image" mode="aspectFill" @error="handleImageError(item)" />
+          <image class="item-image" :src="`http://localhost:3001/${item.image}`" mode="aspectFill"
+            @error="handleImageError(item)" />
         </view>
         <view class="item-info">
           <text class="item-title">{{ item.title }}</text>

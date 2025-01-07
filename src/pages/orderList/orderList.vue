@@ -21,7 +21,7 @@
         <!-- 商品信息 -->
         <view class="order-details">
           <view v-for="(item, idx) in order.items" :key="idx" class="order-product">
-            <image :src="item.image" class="product-image" mode="aspectFill" />
+            <image :src="`http://localhost:3001/${item.image}`" class="product-image" mode="aspectFill" />
             <view class="product-info">
               <text class="product-title">{{ item.title }}</text>
               <text class="product-price">¥{{ item.price }}</text>

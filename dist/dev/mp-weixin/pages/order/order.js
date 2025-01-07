@@ -442,7 +442,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     x: common_vendor.t($options.totalItems),
     y: common_vendor.f($data.selectedItems, (item, index, i0) => {
       return common_vendor.e({
-        a: item.image,
+        a: `http://localhost:3001/${item.image}`,
         b: common_vendor.t(item.title),
         c: item.description
       }, item.description ? {

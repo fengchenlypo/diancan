@@ -187,7 +187,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.filteredItems.length > 0 ? {
     g: common_vendor.f($data.filteredItems, (item, k0, i0) => {
       return common_vendor.e({
-        a: item.image,
+        a: `http://localhost:3001/${item.image}`,
         b: common_vendor.o(($event) => $options.handleImageError(item), item.id),
         c: common_vendor.t(item.title),
         d: common_vendor.t(item.category),

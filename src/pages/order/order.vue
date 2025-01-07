@@ -67,7 +67,7 @@
 
       <text class="h2">一共 {{ totalItems }} 件商品</text>
       <view v-for="(item, index) in selectedItems" :key="index" class="order-item">
-        <image :src="item.image" class="order-item-img" mode="aspectFill" />
+        <image :src="`http://localhost:3001/${item.image}`" class="order-item-img" mode="aspectFill" />
         <view class="order-item-info">
           <text class="order-item-name">{{ item.title }}</text>
           <text class="order-item-desc" v-if="item.description">{{ item.description }}</text>

@@ -236,7 +236,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     g: common_vendor.f($options.filteredItems, (item, idx, i0) => {
       return common_vendor.e({
-        a: item.image,
+        a: `http://localhost:3001/${item.image}`,
         b: common_vendor.t(item.title),
         c: common_vendor.t(item.desc),
         d: common_vendor.t(item.sales),
@@ -272,7 +272,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     o: common_vendor.o((...args) => $options.toggleCartPopup && $options.toggleCartPopup(...args)),
     p: common_vendor.f($options.cartItems, (item, idx, i0) => {
       return {
-        a: item.image,
+        a: `http://localhost:3001/${item.image}`,
         b: common_vendor.t(item.title),
         c: common_vendor.t(item.price),
         d: common_vendor.o(($event) => $options.decreaseCartItemQuantity(item), idx),

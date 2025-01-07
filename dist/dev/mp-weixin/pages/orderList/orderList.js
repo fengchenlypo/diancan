@@ -311,7 +311,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       } : {}, {
         m: common_vendor.f(order.items, (item, idx, i1) => {
           return {
-            a: item.image,
+            a: `http://localhost:3001/${item.image}`,
             b: common_vendor.t(item.title),
             c: common_vendor.t(item.price),
             d: common_vendor.t(item.quantity),

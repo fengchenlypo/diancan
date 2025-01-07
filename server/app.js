@@ -5,7 +5,7 @@ const path = require('path');
 const formidable = require('formidable');
 
 // 创建上传目录
-const uploadDir = path.join(__dirname, '../src/static');
+const uploadDir = path.join(__dirname, 'image');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
@@ -714,7 +714,7 @@ const server = http.createServer((req, res) => {
         fs.unlinkSync(file.filepath); // 删除临时文件
 
         // 生成文件URL
-        const fileUrl = `/static/${newFileName}`;
+        const fileUrl = `/image/${newFileName}`;
         console.log('生成的文件URL:', fileUrl);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
