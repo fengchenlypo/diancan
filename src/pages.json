@@ -9,7 +9,7 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "点餐",
+				"navigationBarTitleText": "食味",
 				"navigationBarBackgroundColor": "#FFFFFF",
 				"navigationBarTextStyle": "black",
 				"enablePullDownRefresh": true,
@@ -39,13 +39,13 @@
 			"style": {
 				"navigationBarTitleText": "搜索",
 				"navigationBarBackgroundColor": "#FFFFFF",
-				"navigationBarTextStyle": "black",
+				"navigationBarTextStyle": "black"
 			}
 		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "知食分子点餐",
+		"navigationBarTitleText": "食味点餐",
 		"navigationBarBackgroundColor": "#FFFFFF",
 		"backgroundColor": "#F8F8F8"
 	}
